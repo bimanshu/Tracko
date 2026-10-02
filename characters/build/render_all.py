@@ -51,8 +51,9 @@ def timing():
 
 
 def crop_to_content(image, pad):
-    box = image.getbbox()
-    left, top, right, bottom = box
+    """Crops to the character itself, ignoring the faint shadow-catcher haze around it."""
+    solid = image.getchannel("A").point(lambda a: 255 if a > 160 else 0)
+    left, top, right, bottom = solid.getbbox()
     return image.crop((max(left - pad, 0), max(top - pad, 0), min(right + pad, image.width), min(bottom + pad, image.height)))
 
 
