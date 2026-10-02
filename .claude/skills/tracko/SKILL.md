@@ -30,7 +30,8 @@ Working name in the early concept decks: "Everything Gym". The product is now **
 | Onboarding scene 7, Goal | Built v0.1 | Build / Lose fat / Both; figure morphs |
 | Onboarding scene 8, History fork | Built v0.1 (choice only) | Import and baseline flows not built |
 | Onboarding scene 9, Future Wrapped | Built v0.1 | 9:16 card with name field, 90 days to go, "Notify me" asks permission |
-| Onboarding UI polish | Next | Driven by the reference library (§9.0) |
+| Characters (female, male) | Built v0.1 | Clay chibi pair + "gym log" clip (walk in, lateral raises, log, +%, celebrate); `characters/` |
+| Onboarding UI polish | Next | Driven by the reference library (§9.0) and the characters (§9.7) |
 | Logging, growth report, home | Not started | |
 
 Code lives in `Tracko/` (see §10). Builds and tests pass in CI; runs on a real iPhone. The flow works, but the visuals are first-pass and need a lot of polish.
@@ -216,6 +217,9 @@ Red is reserved for muscles; it is never used for losses or bodyweight.
 ### 9.6 Accessibility
 Dynamic Type for all non-score text; VoiceOver labels describe what an animation shows; illustrations `accessibilityHidden`; tap targets ≥ 44 pt; never rely on colour alone (always a number or word).
 
+### 9.7 Characters
+Two clay chibi characters, female and male, carry the onboarding story instead of static diagrams (e.g. walking in, lifting, logging the set, celebrating the +%). They live in `characters/`; its README holds the style rules, files and timing. Rules: both characters come from one recipe (`characters/build/tracko_characters.py`), so any clip works for both; clothes never use signal colours; expressions swap rather than morph; numbers (the +% pop-up) are drawn by the app at the clip's timing mark, never baked into the video, so they always match `LiftMath`.
+
 ---
 
 ## 10. Engineering
@@ -288,6 +292,7 @@ Share reaching a first verdict or baseline; time to that moment; notes-import co
 ---
 
 ## 13. Changelog (newest first)
+- **2026-10-02** Characters v0.1: female and male clay chibis built in Blender from one script, character sheets, and an 8 s "gym log" clip (transparent master + preview). Added §9.7.
 - **2026-10-02** Started the UI reference library (`design/references/`) ahead of a big visual polish pass; skill §9.0 points to it.
 - **2026-10-02 · v0.1 code** Xcode project (synchronized folders), all nine onboarding scenes, LiftMath + tests, CI that builds, tests and screenshots every scene. Scenes 5, 6 and 9 built (were placeholders). Runs on device via Xcode.
 - **2026-10-02 · v0.1** Created this skill. Onboarding foundation in SwiftUI: tokens, components, body figure, LiftMath + tests, flow container (progress, back, skip), scenes 1–4 and 7 built, scene 8 choice only, scenes 5, 6, 9 as placeholders.
