@@ -1,0 +1,65 @@
+{
+  "fps": 24,
+  "frames": {
+    "walk_end": 36,
+    "turned": 44,
+    "dumbbells_in": 52,
+    "reps": [
+      [
+        58,
+        78
+      ],
+      [
+        78,
+        98
+      ],
+      [
+        98,
+        118
+      ]
+    ],
+    "dumbbells_out": 118,
+    "phone_in": 124,
+    "taps": [
+      134,
+      139,
+      144
+    ],
+    "popup": 148,
+    "jump_peak": 164,
+    "land": 172,
+    "end": 192
+  },
+  "seconds": {
+    "walk_end": 1.5,
+    "turned": 1.833,
+    "dumbbells_in": 2.167,
+    "reps": [
+      [
+        2.417,
+        3.25
+      ],
+      [
+        3.25,
+        4.083
+      ],
+      [
+        4.083,
+        4.917
+      ]
+    ],
+    "dumbbells_out": 4.917,
+    "phone_in": 5.167,
+    "taps": [
+      5.583,
+      5.792,
+      6.0
+    ],
+    "popup": 6.167,
+    "jump_peak": 6.833,
+    "land": 7.167,
+    "end": 8.0
+  },
+  "popup_text": "+7%",
+  "note": "The app draws the +% pop-up at frames.popup; the transparent clip doesn't include it."
+}

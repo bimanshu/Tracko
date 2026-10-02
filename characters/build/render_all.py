@@ -144,7 +144,7 @@ def popup_layer(size, frame, popup_frame, text):
         return layer
     font = ImageFont.truetype(FONT_SCORE, max(1, int(118 * scale)))
     draw = ImageDraw.Draw(layer)
-    cx, cy = int(size[0] * 0.76), int(size[1] * 0.2 - min(age, 40) * 0.4)
+    cx, cy = int(size[0] * 0.8), int(size[1] * 0.15 - min(age, 40) * 0.4)
     w = draw.textlength(text, font=font)
     glow = Image.new("RGBA", size, (0, 0, 0, 0))
     ImageDraw.Draw(glow).text((cx - w / 2, cy - 60 * scale), text, font=font, fill=GAIN + (90,))
