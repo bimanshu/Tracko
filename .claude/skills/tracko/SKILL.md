@@ -227,7 +227,7 @@ Dynamic Type for all non-score text; VoiceOver labels describe what an animation
   TrackoTests/      LiftMathTests (keeps §7 examples true)
   ```
 - **Project:** `Tracko.xcodeproj` (Xcode 16+) uses synchronized folders: files added under `Tracko/` or `TrackoTests/` join their target automatically, so never hand-edit the project for a new file. Swift 5 language mode, iPhone only, portrait. Bundle ID `com.bimanshu.tracko`.
-- **CI:** `.github/workflows/ios.yml` runs on every push that touches the app: builds, runs the tests, then launches each onboarding scene on an iPhone Pro and an iPhone SE simulator and uploads screenshots (plus a contact sheet per device) as the `screenshots` artifact. Check it after every change; nobody compiles locally in the cloud sessions.
+- **CI:** `.github/workflows/ios.yml` runs on every push that touches the app: builds, runs the tests, then launches each onboarding scene on an iPhone Pro and an iPhone SE simulator and uploads screenshots (plus a contact sheet per device) as the `screenshots` artifact. The JPEGs are also force-pushed to the `ci-screenshots` branch (`git fetch origin ci-screenshots`), which cloud sessions can read when the artifact host is blocked. Check both after every change; cloud sessions can't compile locally.
 - **Running on a phone:** steps in `README.md` (Xcode + free Apple ID, 7-day expiry).
 - **Debug launch argument:** `-TrackoStartScene <0–8>` opens onboarding on that scene (used by CI screenshots).
 - **Conventions:**

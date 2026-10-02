@@ -16,6 +16,8 @@ concurrency:
 jobs:
   build-test-screenshots:
     runs-on: macos-15
+    permissions:
+      contents: write
     timeout-minutes: 40
     defaults:
       run:
@@ -105,6 +107,11 @@ jobs:
                   sheet.paste(shot, (gap + (i % columns) * (width + gap), gap + (i // columns) * (height + gap)))
               sheet.save(f"screenshots/{tag}-sheet.jpg", quality=82)
               print(tag, sheet.size)
+              # Readable single shots for review.
+              for f in files:
+                  shot = Image.open(f).convert("RGB")
+                  shot = shot.resize((590, round(shot.height * 590 / shot.width)))
+                  shot.save(f.replace(".png", ".jpg"), quality=85)
           EOF
 
       - name: Upload screenshots
@@ -114,3 +121,20 @@ jobs:
           name: screenshots
           path: screenshots/
           retention-days: 14
+
+      # Artifacts download from a storage host that some environments can't reach, so the latest
+      # screenshots are also force-pushed, as a single commit, to the ci-screenshots branch.
+      - name: Publish screenshots to the ci-screenshots branch
+        if: ${{ !cancelled() && hashFiles('screenshots/*.jpg') != '' }}
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          mkdir publish
+          cp screenshots/*.jpg publish/
+          cd publish
+          printf 'Screenshots of %s at %s (run %s).\n' "$GITHUB_REF_NAME" "${GITHUB_SHA::7}" "$GITHUB_RUN_ID" > README.md
+          git init -q -b ci-screenshots
+          git add .
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Screenshots of $GITHUB_REF_NAME at ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-screenshots
