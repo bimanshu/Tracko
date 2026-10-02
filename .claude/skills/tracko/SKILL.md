@@ -226,6 +226,10 @@ Dynamic Type for all non-score text; VoiceOver labels describe what an animation
       Scenes/       one file per scene
   TrackoTests/      LiftMathTests (keeps §7 examples true)
   ```
+- **Project:** `Tracko.xcodeproj` (Xcode 16+) uses synchronized folders: files added under `Tracko/` or `TrackoTests/` join their target automatically, so never hand-edit the project for a new file. Swift 5 language mode, iPhone only, portrait. Bundle ID `com.bimanshu.tracko`.
+- **CI:** `.github/workflows/ios.yml` runs on every push that touches the app: builds, runs the tests, then launches each onboarding scene on an iPhone Pro and an iPhone SE simulator and uploads screenshots (plus a contact sheet per device) as the `screenshots` artifact. Check it after every change; nobody compiles locally in the cloud sessions.
+- **Running on a phone:** steps in `README.md` (Xcode + free Apple ID, 7-day expiry).
+- **Debug launch argument:** `-TrackoStartScene <0–8>` opens onboarding on that scene (used by CI screenshots).
 - **Conventions:**
   - Scripted animations: `@MainActor func play() async` driven by `.task(id: replay)`, steps separated by `guard await Script.wait(x) else { return }` so leaving a scene cancels cleanly. Tap a scene to replay.
   - Every scene: works with Reduce Motion, has a `#Preview`, takes data from `DemoContent` (localized units), no hard-coded maths (call `LiftMath`).
