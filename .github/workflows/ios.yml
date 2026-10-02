@@ -1,0 +1,116 @@
+name: iOS
+
+on:
+  push:
+    paths:
+      - "Tracko/**"
+      - "TrackoTests/**"
+      - "Tracko.xcodeproj/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-screenshots:
+    runs-on: macos-15
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Pick simulators
+        id: sims
+        run: |
+          xcrun simctl list devices available -j > devices.json
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json
+          devices = json.load(open("devices.json"))["devices"]
+          def version(runtime):
+              return tuple(int(part) for part in runtime.rsplit("iOS-", 1)[1].split("-"))
+          runtimes = sorted((r for r in devices if ".iOS-" in r), key=version, reverse=True)
+          phones = [d for r in runtimes for d in devices[r] if d["name"].startswith("iPhone")]
+          main = next((d for d in phones if d["name"].endswith("Pro") and "SE" not in d["name"]), phones[0])
+          compact = next((d for d in phones if "SE" in d["name"]), None)
+          print(f"main={main['udid']}")
+          print(f"main_name={main['name']}")
+          print(f"compact={compact['udid'] if compact else ''}")
+          print(f"compact_name={compact['name'] if compact else ''}")
+          EOF
+          cat "$GITHUB_OUTPUT"
+
+      - name: Build and test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project Tracko.xcodeproj \
+            -scheme Tracko \
+            -destination "id=${{ steps.sims.outputs.main }}" \
+            -derivedDataPath build \
+            -quiet \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee xcodebuild.log
+
+      - name: Screenshot every scene
+        if: ${{ !cancelled() && hashFiles('build/Build/Products/Debug-iphonesimulator/Tracko.app/Info.plist') != '' }}
+        run: |
+          APP=build/Build/Products/Debug-iphonesimulator/Tracko.app
+          BUNDLE=com.bimanshu.tracko
+          mkdir -p screenshots
+          shoot() {
+            local udid=$1 tag=$2
+            [ -z "$udid" ] && return 0
+            xcrun simctl boot "$udid" 2>/dev/null || true
+            xcrun simctl bootstatus "$udid" -b > /dev/null
+            xcrun simctl ui "$udid" appearance dark
+            xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 || true
+            xcrun simctl install "$udid" "$APP"
+            for scene in 0 1 2 3 4 5 6 7 8; do
+              xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE" -TrackoStartScene "$scene" > /dev/null
+              sleep 7
+              xcrun simctl io "$udid" screenshot "screenshots/${tag}-scene-${scene}.png" > /dev/null 2>&1
+            done
+            xcrun simctl shutdown "$udid" || true
+          }
+          shoot "${{ steps.sims.outputs.main }}" main
+          shoot "${{ steps.sims.outputs.compact }}" compact
+          ls -la screenshots
+
+      - name: Contact sheets
+        if: ${{ !cancelled() && hashFiles('screenshots/*.png') != '' }}
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet pillow
+          .venv/bin/python - <<'EOF'
+          import glob
+          from PIL import Image
+          for tag in ("main", "compact"):
+              files = sorted(glob.glob(f"screenshots/{tag}-scene-*.png"),
+                             key=lambda p: int(p.rsplit("-", 1)[1].split(".")[0]))
+              if not files:
+                  continue
+              width, gap, columns = 360, 16, 5
+              shots = [Image.open(f).convert("RGB") for f in files]
+              shots = [s.resize((width, round(s.height * width / s.width))) for s in shots]
+              height = max(s.height for s in shots)
+              rows = (len(shots) + columns - 1) // columns
+              sheet = Image.new("RGB", (columns * (width + gap) + gap, rows * (height + gap) + gap), (60, 60, 64))
+              for i, shot in enumerate(shots):
+                  sheet.paste(shot, (gap + (i % columns) * (width + gap), gap + (i // columns) * (height + gap)))
+              sheet.save(f"screenshots/{tag}-sheet.jpg", quality=82)
+              print(tag, sheet.size)
+          EOF
+
+      - name: Upload screenshots
+        if: ${{ !cancelled() && hashFiles('screenshots/*.png') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots/
+          retention-days: 14
