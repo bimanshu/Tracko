@@ -174,6 +174,8 @@ Default from `Locale.measurementSystem`: `.us` → lb, else kg. Demo content loc
 ### 9.0 References
 UI decisions draw on the reference library in `design/references/README.md`: numbered screenshots, what to take from each, and the **Patterns** they agree on. Read it before any UI work. When a pattern is applied to the app, write the resulting rule or token into this section.
 
+UI craft skills from `jakubkrehel/skills` are installed in `.claude/skills/` (`better-ui`, `better-layout`, `better-typography`, `better-colors`, `better-accessibility`, `better-writing`, `better-interface`; user-invoked: `interface-review`, `variant`, `break`, `explain-interface`). They're written for the web: apply their principles (concentric radii, optical alignment, hit areas, type scale, surface depth, contrast) in SwiftUI terms, and ignore CSS- or React-specific mechanics. Where they conflict with this skill, this skill wins. Update them with `npx skills update`.
+
 ### 9.1 Concept
 **The notebook becomes the scoreboard.** The "before" is a light paper notes page; the "after" is a dark scoreboard where numbers do the shouting. Motion always flows the same way: **note → maths → proof** (past on the left/top, proof on the right/bottom).
 
