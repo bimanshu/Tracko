@@ -11,6 +11,13 @@ Screenshots from other apps and sites that set the bar for how Tracko should loo
 
 Tags: `onboarding` `typography` `colour` `layout` `cards` `numbers` `charts` `body` `buttons` `motion` `share-card` `empty-state` `paywall` `navigation` `logging`
 
+## Before
+
+The onboarding as of v0.1 (the code CI screenshots on every push), kept for before-and-after comparison:
+[iPhone 17 Pro](../baseline/v0.1-iphone-17-pro.jpg) · [iPhone SE](../baseline/v0.1-iphone-se.jpg).
+
+Known problems going in: scene 5's "Week 12" overlaps the figure; scene 6's "+18%" collides with the end of the line; the figure reads as a mannequin and its red is heavy; every scene uses the same stage-above-headline layout, so the flow feels flat; and the type has one weight and one size jump.
+
 ## Patterns
 
 _None yet. These get written once three or more references point the same way._
