@@ -1,62 +1,39 @@
 # UI reference library
 
-Screenshots from other apps and sites that set the bar for how Tracko should look and feel. Every UI change should be able to point at a reference here, or at a pattern below.
+Screenshots and recordings from other apps that set the bar for how Tracko should look and feel. Every UI change should be able to point at a reference here, or at a pattern below.
 
 ## How it works
 
-- **Adding references:** send screenshots or links (Mobbin flows work) in a Claude session, with a line on what you like if you have one, or upload them to `inbox/` on GitHub. Claude files each one as `NNN-source-subject.jpg`, writes an entry below, and empties the inbox.
-- **Flows:** a whole flow gets one number. Its screens are `NNN-source-subject-1-name.jpg`, `-2-…` in order, with a `-sheet.jpg` overview. When a recording exists it's kept as `NNN-….mp4` with a `-timeline.jpg` of frames for studying motion.
-- **Citing:** refer to a reference by number ("use 004's card corners"). Numbers never change, and deleted numbers are not reused.
-- **Patterns:** once a few references agree on something, it moves up into **Patterns**. Patterns turn into design tokens and rules in the Tracko skill (§9) when they're applied to the app.
-- **Each entry says:** what the image is, what to take from it (concrete: spacing, type, colour, layout, motion), what to leave, and which Tracko screens it's for.
-
-Tags: `onboarding` `typography` `colour` `layout` `cards` `numbers` `charts` `body` `buttons` `motion` `share-card` `empty-state` `paywall` `navigation` `logging`
+- **Adding references:** send screenshots or links (Mobbin flows work) in a Claude session, or upload files to `inbox/` on GitHub. Claude files each one and writes a short entry below.
+- **Mobbin links:** `python3 design/references/tools/fetch_mobbin.py <link> <NNN>` downloads every screen at full size, the flow recording when there is one, and overview sheets.
+- **Naming:** single screens are `NNN-source-subject.jpg`. A flow gets one number: its screens are `NNN-source-flow-01.jpg`, `-02`, … in order, plus a `-sheet.jpg` overview. A recording is kept as `NNN-source-flow.mp4`, with a `-timeline.jpg` of frames for studying motion.
+- **Entries are filing only:** what it is, what's in it, and the source. What to extract from a reference is decided later, by the product owner; when that happens, a **Take** note is added to the entry and the takeaway goes into **Patterns**.
+- **Citing:** refer to a reference by number ("use 002's progress bar"). Numbers never change, and deleted numbers are not reused.
+- **Patterns:** agreed takeaways, written here first, then turned into design tokens and rules in the Tracko skill (§9) when applied to the app.
 
 ## Before
 
 The onboarding as of v0.1 (the code CI screenshots on every push), kept for before-and-after comparison:
 [iPhone 17 Pro](../baseline/v0.1-iphone-17-pro.jpg) · [iPhone SE](../baseline/v0.1-iphone-se.jpg).
 
-Known problems going in: scene 5's "Week 12" overlaps the figure; scene 6's "+18%" collides with the end of the line; the figure reads as a mannequin and its red is heavy; every scene uses the same stage-above-headline layout, so the flow feels flat; and the type has one weight and one size jump.
-
 ## Patterns
 
-_None yet. These get written once three or more references point the same way._
+_None yet._
 
 ## References
 
-### 001 · Opal · iOS onboarding (flow, 9 screens + recording)
+### 001 · Opal · iOS onboarding
 ![001](001-opal-onboarding-sheet.jpg)
 
-Recording: [001-opal-onboarding.mp4](001-opal-onboarding.mp4) (42 s) · frame timeline: [001-opal-onboarding-timeline.jpg](001-opal-onboarding-timeline.jpg) · source: [Mobbin](https://mobbin.com/explore/flows/be4b5aa1-ba9d-494c-acbb-9ce8faa0d6f5)
+- **What it is:** onboarding for Opal, a screen-time app. 9 screens and a 42 s recording.
+- **Screens:** logo, wordmark, a three-tap story where a dark rock cracks open into a glowing opal ("An Opal only reveals its fire to those who slow down enough to look." / "Closer..." / "Dimmed by noise, apps, and everything else pulling at you."), then a setup run as a typed conversation (name, "have we met before?"), then a sign-up sheet.
+- **Files:** screens `001-opal-onboarding-1-logo.jpg` to `-9-sign-up.jpg` · recording [001-opal-onboarding.mp4](001-opal-onboarding.mp4) · frames [001-opal-onboarding-timeline.jpg](001-opal-onboarding-timeline.jpg)
+- **Source:** [Mobbin](https://mobbin.com/explore/flows/be4b5aa1-ba9d-494c-acbb-9ce8faa0d6f5)
 
-- **What it is:** a screen-time app's onboarding. A short story told with one object (a dull rock that cracks open into a glowing opal), then a setup that runs as a conversation, then sign-up.
-- **Take:**
-  - **One hero object across the whole story.** The rock appears, cracks over three taps, becomes the opal, then shrinks and docks at the top of the screen to preside over the conversation (19.3–20.7 s). Nothing else competes for attention. Tracko's version: the notes line is the rock, the verdict number is the opal, and the same element carries from scene to scene with a shared-element move instead of nine separate stages.
-  - **Story scenes are almost empty.** One centred line of about 22 pt medium weight, at most three lines, sits about a quarter of the way down; the object sits in the middle; a quiet "tap to continue" sits at the bottom. No cards, no button bar, no progress chrome. Tapping anywhere advances.
-  - **Text swaps by blur.** The outgoing line blurs and fades (about 0.4 s) while the next fades in. Nothing slides.
-  - **Setup as a conversation.** The app types its lines (about 25 characters a second); each older line dims to about 35 % and blurs as the next arrives and pushes it up; the answer control (text field or two options) appears under the newest question. This is "your log talks back" taken literally.
-  - **Black, lit from within.** Pure black base; the only light comes from the hero (a soft glow around the opal) and a faint green tint fading down from the top of the conversation screens.
-  - **Controls.** Full-capsule text field and buttons, about 56 pt tall and 20 pt from the screen edges, filled near-black (#111) with a hairline border. Continue sits dim and dark while disabled and visibly lights up once there's an answer.
-  - **Intro.** Logo mark, then the wordmark grows out of it (0.7 s), then everything blurs away into the story (2 s).
-- **Leave:**
-  - The rainbow, iridescent gradients. Each Tracko colour has one meaning (§9.2), so the "lights up" moment uses target yellow, or gain green for a win.
-  - "TAP TO CONTINUE" in capitals. §9.3 rules out all-caps, so use sentence case in chalk-muted.
-  - The photoreal 3D rock. It needs 3D or video art. Tracko's transformation (a note becoming numbers) can be built natively in SwiftUI.
-  - The slow pace: 42 s for 9 screens. Lifters are impatient, so type faster and let a tap finish the line instantly.
-  - Asking for a name first. Tracko shows the maths before it asks for anything (§11).
-- **For:** the whole onboarding structure (scenes 1–6 as a story around one object, scenes 7–9 as a conversation), scene and text transitions, the primary button and text field, backgrounds.
-- **Tags:** `onboarding` `motion` `layout` `typography` `buttons` `colour`
+### 002 · Lifesum · iOS onboarding
+![002](002-lifesum-onboarding-sheet.jpg)
 
-<!--
-Entry template:
-
-### NNN · Source · Subject
-![NNN](NNN-source-subject.png)
-
-- **What it is:** one line.
-- **Take:** concrete things to copy (sizes, spacing, type, colour use, layout, motion).
-- **Leave:** what doesn't fit Tracko, and why.
-- **For:** Tracko screens or components (e.g. scene 2, Wrapped card, primary button).
-- **Tags:** `typography` `numbers`
--->
+- **What it is:** onboarding for Lifesum, a nutrition and calorie app. 17 screens and a recording.
+- **Screens:** splash, gradient splash, a photo welcome ("This is the start of life improving") with create account and log in, two value screens (nutrition, social proof with App of the Day, 65M+ users and a review), then a questionnaire with a progress bar: weight goal, priorities (multi-select), sex, birth date and weight on wheel pickers, a "Great, we've got your starting point" interstitial, pace of change on a slider, a full-screen "100%" plan-building screen, and a "Your personalized plan is ready" sign-up.
+- **Files:** screens `002-lifesum-onboarding-01.jpg` to `-17.jpg` · recording [002-lifesum-onboarding.mp4](002-lifesum-onboarding.mp4) · frames [002-lifesum-onboarding-timeline.jpg](002-lifesum-onboarding-timeline.jpg)
+- **Source:** [Mobbin](https://mobbin.com/explore/flows/f373ce15-3f4e-4d88-aa24-365969ad35eb)

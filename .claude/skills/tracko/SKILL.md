@@ -172,7 +172,7 @@ Default from `Locale.measurementSystem`: `.us` → lb, else kg. Demo content loc
 ## 9. Design system
 
 ### 9.0 References
-UI decisions draw on the reference library in `design/references/README.md`: numbered screenshots, what to take from each, and the **Patterns** they agree on. Read it before any UI work. When a pattern is applied to the app, write the resulting rule or token into this section.
+UI decisions draw on the reference library in `design/references/README.md`: numbered screenshots and recordings (Mobbin links are fetched with `design/references/tools/fetch_mobbin.py`), and the **Patterns** taken from them. Entries are filing only; the product owner decides what to extract from each, so don't apply a reference until a takeaway is recorded. Read it before any UI work. When a pattern is applied to the app, write the resulting rule or token into this section.
 
 UI craft skills from `jakubkrehel/skills` are installed in `.claude/skills/` (`better-ui`, `better-layout`, `better-typography`, `better-colors`, `better-accessibility`, `better-writing`, `better-interface`; user-invoked: `interface-review`, `variant`, `break`, `explain-interface`). They're written for the web: apply their principles (concentric radii, optical alignment, hit areas, type scale, surface depth, contrast) in SwiftUI terms, and ignore CSS- or React-specific mechanics. Where they conflict with this skill, this skill wins. Update them with `npx skills update`.
 
