@@ -25,14 +25,15 @@ Working name in the early concept decks: "Everything Gym". The product is now **
 | Onboarding scene 2, Note to verdict | Built v0.1 | Matched-geometry parse, ghost, bars, +10% count-up |
 | Onboarding scene 3, Number to beat | Built v0.1 | Live bar vs dashed line, set tiles, haptics |
 | Onboarding scene 4, Try it | Built v0.1 | Rep slider, live % and muscle glow, auto-nudge |
-| Onboarding scene 5, Watch yourself grow | Placeholder | Needs body time-lapse (consider Rive) |
-| Onboarding scene 6, Proof on a clock | Placeholder | Timeline + honest curve with a "recovery" dip |
+| Onboarding scene 5, Watch yourself grow | Built v0.1 | 12-week time-lapse on the honest curve; shape-based figure (Rive later) |
+| Onboarding scene 6, Proof on a clock | Built v0.1 | Curve draws Today → Week 1 → Month 3 with a neutral "recovery" dip |
 | Onboarding scene 7, Goal | Built v0.1 | Build / Lose fat / Both; figure morphs |
 | Onboarding scene 8, History fork | Built v0.1 (choice only) | Import and baseline flows not built |
-| Onboarding scene 9, Future Wrapped | Placeholder | Notification permission lives here |
+| Onboarding scene 9, Future Wrapped | Built v0.1 | 9:16 card with name field, 90 days to go, "Notify me" asks permission |
+| Onboarding UI polish | Next | Driven by the reference library (§9.0) |
 | Logging, growth report, home | Not started | |
 
-Code lives in `Tracko/` (see §9). Not yet compiled in Xcode as of v0.1.
+Code lives in `Tracko/` (see §10). Builds and tests pass in CI; runs on a real iPhone. The flow works, but the visuals are first-pass and need a lot of polish.
 
 ---
 
@@ -170,6 +171,9 @@ Default from `Locale.measurementSystem`: `.us` → lb, else kg. Demo content loc
 
 ## 9. Design system
 
+### 9.0 References
+UI decisions draw on the reference library in `design/references/README.md`: numbered screenshots, what to take from each, and the **Patterns** they agree on. Read it before any UI work. When a pattern is applied to the app, write the resulting rule or token into this section.
+
 ### 9.1 Concept
 **The notebook becomes the scoreboard.** The "before" is a light paper notes page; the "after" is a dark scoreboard where numbers do the shouting. Motion always flows the same way: **note → maths → proof** (past on the left/top, proof on the right/bottom).
 
@@ -282,4 +286,6 @@ Share reaching a first verdict or baseline; time to that moment; notes-import co
 ---
 
 ## 13. Changelog (newest first)
+- **2026-10-02** Started the UI reference library (`design/references/`) ahead of a big visual polish pass; skill §9.0 points to it.
+- **2026-10-02 · v0.1 code** Xcode project (synchronized folders), all nine onboarding scenes, LiftMath + tests, CI that builds, tests and screenshots every scene. Scenes 5, 6 and 9 built (were placeholders). Runs on device via Xcode.
 - **2026-10-02 · v0.1** Created this skill. Onboarding foundation in SwiftUI: tokens, components, body figure, LiftMath + tests, flow container (progress, back, skip), scenes 1–4 and 7 built, scene 8 choice only, scenes 5, 6, 9 as placeholders.
