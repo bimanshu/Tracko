@@ -37,3 +37,12 @@ _None yet._
 - **Screens:** splash, gradient splash, a photo welcome ("This is the start of life improving") with create account and log in, two value screens (nutrition, social proof with App of the Day, 65M+ users and a review), then a questionnaire with a progress bar: weight goal, priorities (multi-select), sex, birth date and weight on wheel pickers, a "Great, we've got your starting point" interstitial, pace of change on a slider, a full-screen "100%" plan-building screen, and a "Your personalized plan is ready" sign-up.
 - **Files:** screens `002-lifesum-onboarding-01.jpg` to `-17.jpg` · recording [002-lifesum-onboarding.mp4](002-lifesum-onboarding.mp4) · frames [002-lifesum-onboarding-timeline.jpg](002-lifesum-onboarding-timeline.jpg)
 - **Source:** [Mobbin](https://mobbin.com/explore/flows/f373ce15-3f4e-4d88-aa24-365969ad35eb)
+
+### 003 · Endel · iOS onboarding
+![003](003-endel-onboarding-sheet.jpg)
+
+- **What it is:** onboarding for Endel, a focus and sleep sound app. 33 screens; Mobbin has no recording of this flow.
+- **Your note:** you really like the illustration and the storytelling.
+- **Screens:** logo; a four-screen story told with white line illustrations on black (a head beside a busy page, "We live in an over-stimulating world"; sound waves passing through a face, "A new world needs new solutions"; a phone radiating sound, "That's why we made Endel"; a head with a glowing centre, "Improve your state of mind with the power of sound"); a welcome screen; questions (how you discovered Endel, age, gender, goal, how easy it is to start a task, can you read without checking your phone, have you felt a flow state); illustrated permission asks for ad tracking ("Help us to help others") and reminders ("Get your peak productivity", a circadian curve); a "Soon you will!" proof screen comparing Endel to a static playlist; a "7x" focus summary; account setup and email sign-in; and a paywall with a moon-and-clouds face illustration ("Invest in a happy brain").
+- **Files:** screens `003-endel-onboarding-01.jpg` to `-33.jpg`
+- **Source:** [Mobbin](https://mobbin.com/explore/flows/33fa4e4a-2412-4396-94ae-99380009a403)
