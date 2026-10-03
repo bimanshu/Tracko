@@ -14,7 +14,10 @@ Screenshots and recordings from other apps that set the bar for how Tracko shoul
 
 ## Priority
 
-1. **004 · BitePal onboarding.** The bar for illustration and storytelling: the owner wants Tracko's illustrations to be like this, likes the story, and likes how it shows what users can do with the app.
+Both are priority 1.
+
+- **005 · Any Distance onboarding.** Exactly how the owner wants Tracko's onboarding to look. Its 3D character matches Tracko's characters (`characters/`).
+- **004 · BitePal onboarding.** The bar for illustration and storytelling: the owner wants Tracko's illustrations to be like this, likes the story, and likes how it shows what users can do with the app.
 
 ## Before
 
@@ -61,3 +64,12 @@ _None yet._
 - **Look:** flat 2D cartoon mascot with thick outlines; a different soft pastel gradient on each screen; bold condensed black headlines; rounded white cards; black capsule "Next" buttons.
 - **Files:** screens `004-bitepal-onboarding-01.jpg` to `-18.jpg` · recording [004-bitepal-onboarding.mp4](004-bitepal-onboarding.mp4) · frames [004-bitepal-onboarding-timeline.jpg](004-bitepal-onboarding-timeline.jpg)
 - **Source:** [Mobbin](https://mobbin.com/explore/flows/3aca70bc-a1e3-4895-9a72-24dc68de3bf9)
+
+### 005 · Any Distance · iOS onboarding, collectibles screen (priority 1)
+![005](005-any-distance-onboarding-collectibles.jpg)
+
+- **What it is:** one onboarding screen from Any Distance, an activity-tracking app: the last of five pages ("Collect'em all Collectibles").
+- **Owner's note:** priority 1. Exactly how the owner wants Tracko's onboarding to look; the 3D character matches Tracko's characters.
+- **Screen:** black background with a deep red glow falling from the top; the app's logo in an outlined capsule; a 3D diorama on a dark round platform: a phone showing a running route on a dark map and a "20Km" activity medal, a clay-like 3D cat mascot in a cap and sneakers leaning on it, mushroom-shaped trees, a sneaker and a water bottle; a large bold white headline ("Collect'em all Collectibles") with a one-line subline ("Earn achievements, rewards and digital collectibles."); five page dots; a white capsule "Start →" button; "Sign In" at the top left.
+- **Files:** `005-any-distance-onboarding-collectibles.jpg` (a single screen, sent as a screenshot)
+- **Source:** screenshot from Mobbin (Any Distance, iOS)
