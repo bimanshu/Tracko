@@ -42,7 +42,7 @@ _None yet._
 ![003](003-endel-onboarding-sheet.jpg)
 
 - **What it is:** onboarding for Endel, a focus and sleep sound app. 33 screens; Mobbin has no recording of this flow.
-- **Your note:** you really like the illustration and the storytelling.
+- **Owner's note:** really likes the illustration and the storytelling.
 - **Screens:** logo; a four-screen story told with white line illustrations on black (a head beside a busy page, "We live in an over-stimulating world"; sound waves passing through a face, "A new world needs new solutions"; a phone radiating sound, "That's why we made Endel"; a head with a glowing centre, "Improve your state of mind with the power of sound"); a welcome screen; questions (how you discovered Endel, age, gender, goal, how easy it is to start a task, can you read without checking your phone, have you felt a flow state); illustrated permission asks for ad tracking ("Help us to help others") and reminders ("Get your peak productivity", a circadian curve); a "Soon you will!" proof screen comparing Endel to a static playlist; a "7x" focus summary; account setup and email sign-in; and a paywall with a moon-and-clouds face illustration ("Invest in a happy brain").
 - **Files:** screens `003-endel-onboarding-01.jpg` to `-33.jpg`
 - **Source:** [Mobbin](https://mobbin.com/explore/flows/33fa4e4a-2412-4396-94ae-99380009a403)
