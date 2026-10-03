@@ -8,8 +8,13 @@ Screenshots and recordings from other apps that set the bar for how Tracko shoul
 - **Mobbin links:** `python3 design/references/tools/fetch_mobbin.py <link> <NNN>` downloads every screen at full size, the flow recording when there is one, and overview sheets.
 - **Naming:** single screens are `NNN-source-subject.jpg`. A flow gets one number: its screens are `NNN-source-flow-01.jpg`, `-02`, … in order, plus a `-sheet.jpg` overview. A recording is kept as `NNN-source-flow.mp4`, with a `-timeline.jpg` of frames for studying motion.
 - **Entries are filing only:** what it is, what's in it, and the source. What to extract from a reference is decided later, by the product owner; when that happens, a **Take** note is added to the entry and the takeaway goes into **Patterns**.
+- **Priority:** the product owner ranks references. The **Priority** list below comes first whenever references disagree.
 - **Citing:** refer to a reference by number ("use 002's progress bar"). Numbers never change, and deleted numbers are not reused.
 - **Patterns:** agreed takeaways, written here first, then turned into design tokens and rules in the Tracko skill (§9) when applied to the app.
+
+## Priority
+
+1. **004 · BitePal onboarding.** The bar for illustration and storytelling: the owner wants Tracko's illustrations to be like this, likes the story, and likes how it shows what users can do with the app.
 
 ## Before
 
@@ -46,3 +51,13 @@ _None yet._
 - **Screens:** logo; a four-screen story told with white line illustrations on black (a head beside a busy page, "We live in an over-stimulating world"; sound waves passing through a face, "A new world needs new solutions"; a phone radiating sound, "That's why we made Endel"; a head with a glowing centre, "Improve your state of mind with the power of sound"); a welcome screen; questions (how you discovered Endel, age, gender, goal, how easy it is to start a task, can you read without checking your phone, have you felt a flow state); illustrated permission asks for ad tracking ("Help us to help others") and reminders ("Get your peak productivity", a circadian curve); a "Soon you will!" proof screen comparing Endel to a static playlist; a "7x" focus summary; account setup and email sign-in; and a paywall with a moon-and-clouds face illustration ("Invest in a happy brain").
 - **Files:** screens `003-endel-onboarding-01.jpg` to `-33.jpg`
 - **Source:** [Mobbin](https://mobbin.com/explore/flows/33fa4e4a-2412-4396-94ae-99380009a403)
+
+### 004 · BitePal · iOS onboarding (priority 1)
+![004](004-bitepal-onboarding-sheet.jpg)
+
+- **What it is:** onboarding for BitePal, a calorie-tracking app with a virtual raccoon pet. 18 screens and a recording.
+- **Owner's note:** priority 1. Wants Tracko's illustrations to be like this; likes the story, and how it shows what users can do with the app.
+- **Screens:** raccoon logo on lavender; welcome "Reach your weight goals", with a food bowl, a peeking raccoon and a hand-written "With cute raccoon" note; "Track calories: just snap a photo and let AI do the rest", with a salad card tagged with calories; "How did you hear about us?" (unselected and selected); influencer name; "BitePal provides long-term results", a weight chart against other apps; "Why BitePal's unique approach works", three tilted feature cards (snap a photo, track daily progress, support from your virtual pet); "Fasting makes you lose weight 1.2x faster" with a cited source; "Let's meet your virtual pet!"; "This raccoon is now your virtual pet" (it bursts out of a bin of food scraps); naming the pet ("Caramel"); a ratings screen (4.8, reviews); "We'll support you to keep logging", the raccoon on a rainbow with a reminder notification; reminder times (morning, before meals, when the pet is hungry); "Now let's talk about your eating habits", the raccoon thinking.
+- **Look:** flat 2D cartoon mascot with thick outlines; a different soft pastel gradient on each screen; bold condensed black headlines; rounded white cards; black capsule "Next" buttons.
+- **Files:** screens `004-bitepal-onboarding-01.jpg` to `-18.jpg` · recording [004-bitepal-onboarding.mp4](004-bitepal-onboarding.mp4) · frames [004-bitepal-onboarding-timeline.jpg](004-bitepal-onboarding-timeline.jpg)
+- **Source:** [Mobbin](https://mobbin.com/explore/flows/3aca70bc-a1e3-4895-9a72-24dc68de3bf9)
