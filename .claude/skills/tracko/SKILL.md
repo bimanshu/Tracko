@@ -21,20 +21,14 @@ Working name in the early concept decks: "Everything Gym". The product is now **
 
 | Area | State | Notes |
 |---|---|---|
-| Onboarding scene 1, Hook | Built v0.1 | Notes page scrolls, freezes, dims |
-| Onboarding scene 2, Note to verdict | Built v0.1 | Matched-geometry parse, ghost, bars, +10% count-up |
-| Onboarding scene 3, Number to beat | Built v0.1 | Live bar vs dashed line, set tiles, haptics |
-| Onboarding scene 4, Try it | Built v0.1 | Rep slider, live % and muscle glow, auto-nudge |
-| Onboarding scene 5, Watch yourself grow | Built v0.1 | 12-week time-lapse on the honest curve; shape-based figure (Rive later) |
-| Onboarding scene 6, Proof on a clock | Built v0.1 | Curve draws Today → Week 1 → Month 3 with a neutral "recovery" dip |
-| Onboarding scene 7, Goal | Built v0.1 | Build / Lose fat / Both; figure morphs |
-| Onboarding scene 8, History fork | Built v0.1 (choice only) | Import and baseline flows not built |
-| Onboarding scene 9, Future Wrapped | Built v0.1 | 9:16 card with name field, 90 days to go, "Notify me" asks permission |
-| Characters (female, male) | Built v0.1 | Clay chibi pair + "gym log" clip (walk in, lateral raises, log, +%, celebrate); `characters/` |
-| Onboarding UI polish | Next | Driven by the reference library (§9.0) and the characters (§9.7) |
+| Onboarding (4 pages) | Built v0.2 | Any Distance layout (§11): welcome, log it like a note, number to beat, get stronger. 3D heroes with live phone screens |
+| Design system | Built v0.2 | OKLCH tokens rendered in Display P3, Geist type scale, green glow (§9) |
+| Characters (female, male) | Built v0.2 | Vinyl-toy finish, onboarding heroes, sheets (`characters/`). The "gym log" clip is still the v0.1 look |
+| Goal, notes import, baseline, notification ask | Moved out of onboarding | Owner capped onboarding at 4 pages; these move to the app's first run (not built) |
+| Logo | Placeholder | A "T" in a capsule, until the brand mark is designed |
 | Logging, growth report, home | Not started | |
 
-Code lives in `Tracko/` (see §10). Builds and tests pass in CI; runs on a real iPhone. The flow works, but the visuals are first-pass and need a lot of polish.
+Code lives in `Tracko/` (see §10). Builds and tests run in CI, which also screenshots every onboarding page; the app runs on a real iPhone.
 
 ---
 
@@ -166,7 +160,7 @@ Default from `Locale.measurementSystem`: `.us` → lb, else kg. Demo content loc
 - Onboarding headlines: ≤ 7 words. If a scene needs a paragraph, the animation isn't working yet.
 - Never say "AI". Show understanding instead (shorthand parsed, maths done).
 - No shame words. A dip is "recovery". A missed week is "pick it back up", not "streak lost".
-- Buttons say what happens: "Continue", "Start tracking", "Import notes". No arrows in labels.
+- Buttons say what happens: "Continue", "Start tracking", "Import notes". No arrow characters in label text; the onboarding's advance button carries a trailing arrow icon, as in the reference, hidden from VoiceOver.
 
 ---
 
@@ -175,39 +169,45 @@ Default from `Locale.measurementSystem`: `.us` → lb, else kg. Demo content loc
 ### 9.0 References
 UI decisions draw on the reference library in `design/references/README.md`: numbered screenshots and recordings (Mobbin links are fetched with `design/references/tools/fetch_mobbin.py`), and the **Patterns** taken from them. Entries are filing only; the product owner decides what to extract from each, so don't apply a reference until a takeaway is recorded. The library's **Priority** list is the owner's ranking and wins when references disagree; two references share priority 1: 005 (Any Distance; its whole flow is 006) for how the onboarding should look, with a 3D character matching Tracko's; 004 (BitePal) for illustration and storytelling. Read it before any UI work. When a pattern is applied to the app, write the resulting rule or token into this section.
 
+**Applied:** the onboarding layout, glow, hero dioramas and button come from 005/006 (library pattern P1, owner's direction 2026-10-14), with green as the brand colour instead of the reference's red. The hero phone's size and the platform's size and colours were measured from 006 (see §9.7).
+
 UI craft skills from `jakubkrehel/skills` are installed in `.claude/skills/` (`better-ui`, `better-layout`, `better-typography`, `better-colors`, `better-accessibility`, `better-writing`, `better-interface`; user-invoked: `interface-review`, `variant`, `break`, `explain-interface`). They're written for the web: apply their principles (concentric radii, optical alignment, hit areas, type scale, surface depth, contrast) in SwiftUI terms, and ignore CSS- or React-specific mechanics. Where they conflict with this skill, this skill wins. Update them with `npx skills update`.
 
 ### 9.1 Concept
-**The notebook becomes the scoreboard.** The "before" is a light paper notes page; the "after" is a dark scoreboard where numbers do the shouting. Motion always flows the same way: **note → maths → proof** (past on the left/top, proof on the right/bottom).
+**Your log, on a stage.** A near-black canvas with a soft green glow falling from the top; 3D characters on a round platform beside a giant phone that shows Tracko's own live screen; one bold headline. Numbers do the shouting, in brand green. Motion still flows **note → maths → proof**.
 
-### 9.2 Colour (each signal has one meaning; never decorative)
-| Token | Hex | Meaning |
-|---|---|---|
-| ink | #16171B | App background |
-| slab / slabRaised | #1E2027 / #262931 | Cards / cards on cards |
-| hairline | #2E313A | Borders, dividers |
-| chalk / chalkMuted / chalkDim | #EDEEF0 / #9AA0A8 / #6B7079 | Text on dark |
-| paper / pencil / highlighter | #FAF8F2 / #26262A / #FCE8A6 | The notes page |
-| **gain** | #3DBA6E | You improved |
-| **target** | #F2C230 | What to do next; primary button |
-| **muscle** | #E5484D | Muscles you trained (never "bad") |
-| **past** | #4C8BF5 | History, last time, the ghost |
-| figure | #3A3F4B | Body illustration |
+### 9.2 Colour (OKLCH, rendered in Display P3)
+Tokens are written in OKLCH: `Palette` holds the ramps (primitives), `Theme` names what each is for, and views only use `Theme`. `design/tools/palette.py` prints each token's P3 and sRGB values, gamut and contrast; `ColorTests` checks the same in CI. Keep both in sync with `Theme.swift`.
 
-Red is reserved for muscles; it is never used for losses or bodyweight.
+| Theme token | Palette | OKLCH | Use |
+|---|---|---|---|
+| canvas | neutral950 | 0.090 0.004 160 | App background, near-black (the reference's is black) |
+| surface / surfaceRaised | neutral900 / 850 | 0.170 0.008 160 / 0.225 0.010 160 | Screens, cards / cards on cards, bar tracks |
+| border | neutral800 | 0.290 0.012 160 | Structure only |
+| indicator | neutral600 | 0.480 0.012 160 | Inactive page dots (3.2:1 on canvas) |
+| textTertiary / textSecondary / textPrimary | neutral500 / 300 / 50 | 0.640 / 0.800 / 0.975 | Text (6.2 / 11.1 / 19.3:1 on canvas) |
+| **accent** | green300 | 0.850 0.235 152 | **Brand and growth:** gains, the +%, a beaten target. Beyond sRGB on purpose |
+| accentMuted | green900 | 0.330 0.085 152 | Tinted fills behind accent content |
+| glow | green600 | 0.500 0.170 152 | The top glow only: fades to canvas by 52% of the height, mixed in OKLab (shape measured from 006) |
+
+- **Green means growth, and is the brand.** It merges the old "gain" signal; the glow is its one decorative use (owner's decision, 2026-10-14). Never use green for anything that isn't growth or the brand.
+- **Reserved for later features**, to be added in OKLCH when first used: target (yellow, what to do next), muscle (red, muscles trained; never losses or bodyweight), past (blue, history and ghosts).
+- The primary button is a light pill (textPrimary fill, canvas label), as in the reference: one per screen.
 
 ### 9.3 Type
-- **Scoreboard numbers and scene headlines:** SF Pro **Compressed Black** (`.width(.compressed)`), large.
-- **Everything else:** SF Pro at Dynamic Type text styles.
-- **Notes page:** SF Pro callout, like the Notes app.
-- No monospace labels, no all-caps eyebrows. Use `.monospacedDigit()` for changing numbers.
+- **Geist** (SIL OFL, `DesignSystem/Fonts/`), registered at launch by `Fonts.register()`. Faces: Regular, SemiBold, Bold, ExtraBold.
+- **Scale (`TypeScale`, Dynamic Type):** wordmark 52 ExtraBold, −3.5% tracking · intro 24 SemiBold · headline 34 Bold, −2% · body 17 Regular, +3 pt line spacing · button 17 SemiBold.
+- Text inside an illustration (the hero phone's screen) uses fixed sizes via `TypeScale.illustration`; the illustration carries a VoiceOver label instead.
+- `.monospacedDigit()` on changing numbers. No monospace labels, no all-caps eyebrows.
+- iOS 17 can't set line height below the font's own (Geist ≈ 1.3); keep headlines to two short lines.
 
 ### 9.4 Motion
 - One orchestrated moment per scene; everything else still.
 - Springs for things that settle (`spring(duration: 0.55, bounce: 0.22)`), snappy for UI feedback, long soft spring for growing bars.
 - Numbers roll with `.contentTransition(.numericText(value:))`.
 - Honest motion: growth curves slow down over time.
-- **Reduce Motion:** jump to the final frame (or crossfade). Every scene must handle it.
+- **Reduce Motion:** jump to the final frame (or crossfade). Every page must handle it.
+- Buttons scale to 0.96 when pressed. The glow fades in once when the app opens. Each onboarding page has one moment: its phone screen's script.
 
 ### 9.5 Haptics (`.sensoryFeedback`)
 - Set logged → `.impact(weight: .light)`
@@ -215,10 +215,12 @@ Red is reserved for muscles; it is never used for losses or bodyweight.
 - Slider and option changes → `.selection`
 
 ### 9.6 Accessibility
-Dynamic Type for all non-score text; VoiceOver labels describe what an animation shows; illustrations `accessibilityHidden`; tap targets ≥ 44 pt; never rely on colour alone (always a number or word).
+Dynamic Type for all non-score text; VoiceOver labels describe what an animation shows (each hero is one image element with a description built from the demo numbers); decorative pieces `accessibilityHidden`; tap targets ≥ 44 pt (the pill is 48); never rely on colour alone (the current page dot is also longer). Page dots are adjustable for VoiceOver. At the largest text sizes an onboarding page scrolls rather than clipping (`ViewThatFits`).
 
 ### 9.7 Characters
-Two clay chibi characters, female and male, carry the onboarding story instead of static diagrams (e.g. walking in, lifting, logging the set, celebrating the +%). They live in `characters/`; its README holds the style rules, files and timing. Rules: both characters come from one recipe (`characters/build/tracko_characters.py`), so any clip works for both; clothes never use signal colours; expressions swap rather than morph; numbers (the +% pop-up) are drawn by the app at the clip's timing mark, never baked into the video, so they always match `LiftMath`.
+Two chibi characters, female and male, carry the story. **v0.2 look** (owner: "polish it more like the Any Distance mascot"): glossy vinyl-toy finish, black-and-white colour blocking with brand-green details (she: white top, black leggings, green hair tie; he: black top, white shorts, white cap with a green badge), big glossy eyes with a white rim, thumbs, chunky sneakers on a green midsole. Both come from one recipe (`characters/build/tracko_characters.py`), so any pose works for both; expressions swap rather than morph; numbers are drawn by the app, never baked into a render.
+
+**Onboarding heroes** (`render_all.py heroes`): one shared camera and platform, so the stage holds still as pages swipe. Matched to 006: the platform spans 82% of the screen width, the phone 32% (about 2:1, centred), the camera sits ~5° above the platform and frames with lens shift; platform top ≈ rgb(31,31,37), side ≈ rgb(10,10,15), phone frame ≈ rgb(20,19,20). The pipeline writes the PNGs into `Assets.xcassets/Onboarding/` and the phone-screen rectangles into `Onboarding/HeroRender.swift`.
 
 ---
 
@@ -231,19 +233,21 @@ Two clay chibi characters, female and male, carry the onboarding story instead o
   Tracko/
     App/            TrackoApp, HomePlaceholderView
     Core/           LiftMath (formulas, units)
-    DesignSystem/   Theme (tokens), Components, BodyFigure
-    Onboarding/     OnboardingModel, OnboardingFlowView, Script, DemoContent
-      Scenes/       one file per scene
-  TrackoTests/      LiftMathTests (keeps §7 examples true)
+    DesignSystem/   OKLCH, Theme (Palette, Theme, TypeScale, Space, Radius, Motion), Components, Fonts (+ Geist)
+    Onboarding/     OnboardingModel, OnboardingFlowView, OnboardingPageView, Hero, PhoneScreens,
+                    HeroRender (generated), Script, DemoContent
+    Assets.xcassets/Onboarding/   hero renders (generated)
+  TrackoTests/      LiftMathTests (§7 examples), ColorTests (gamut, contrast), DemoContentTests
   ```
 - **Project:** `Tracko.xcodeproj` (Xcode 16+) uses synchronized folders: files added under `Tracko/` or `TrackoTests/` join their target automatically, so never hand-edit the project for a new file. Swift 5 language mode, iPhone only, portrait. Bundle ID `com.bimanshu.tracko`.
 - **CI:** `.github/workflows/ios.yml` runs on every push that touches the app: builds, runs the tests, then launches each onboarding scene on an iPhone Pro and an iPhone SE simulator and uploads screenshots (plus a contact sheet per device) as the `screenshots` artifact. The JPEGs are also force-pushed to the `ci-screenshots` branch (`git fetch origin ci-screenshots`), which cloud sessions can read when the artifact host is blocked. Check both after every change; cloud sessions can't compile locally.
 - **Running on a phone:** steps in `README.md` (Xcode + free Apple ID, 7-day expiry).
-- **Debug launch argument:** `-TrackoStartScene <0–8>` opens onboarding on that scene (used by CI screenshots).
+- **Debug launch argument:** `-TrackoStartScene <0–3>` opens onboarding on that page (used by CI screenshots).
+- **Generated files:** `HeroRender.swift` and the hero PNGs come from `python3 characters/build/render_all.py heroes` (Blender 4.5). Re-render rather than edit them.
 - **Conventions:**
-  - Scripted animations: `@MainActor func play() async` driven by `.task(id: replay)`, steps separated by `guard await Script.wait(x) else { return }` so leaving a scene cancels cleanly. Tap a scene to replay.
-  - Every scene: works with Reduce Motion, has a `#Preview`, takes data from `DemoContent` (localized units), no hard-coded maths (call `LiftMath`).
-  - Colours, fonts, spacing and animations only via `Theme`, `Font`, `Space`, `Radius`, `Motion`.
+  - Scripted animations: `@MainActor func play() async` driven by `.task(id: ScriptRun(isActive:replay:))`, steps separated by `guard await Script.wait(x) else { return }` so leaving a page cancels and rewinds cleanly. Tap a hero to replay.
+  - Every page: works with Reduce Motion, has a `#Preview`, takes data from `DemoContent` (localized units), no hard-coded maths (call `LiftMath`).
+  - Colours, fonts, spacing and animations only via `Theme`, `TypeScale`, `Space`, `Radius`, `Motion`. New colours go into `Palette` in OKLCH first.
   - Unit-test every formula with the reference examples in §7.
 
 ---
@@ -252,33 +256,30 @@ Two clay chibi characters, female and male, carry the onboarding story instead o
 
 ### Why onboarding exists
 1. **Set the mental model:** "I log once, it does the maths and talks back."
-2. **Get the "before":** a % needs two data points. Import old notes or log one recent lift.
-3. **Deliver the first win** before onboarding ends: the first "+%" or the first number to beat.
+2. **Show the payoff before asking for anything:** a verdict, a number to beat, growth over time.
+
+Getting the "before" (notes import or one baseline lift) and the first win now happen in the app's first run, not in onboarding (owner's decision, 2026-10-14: at most 4 screens).
 
 ### The one message
 **Your log talks back**, in three beats: you already do the work → we do the maths → you watch yourself change.
 
-### Storyboard (60–90 s, skippable to the goal scene)
-| # | Scene | Visual and motion | Words | Collects |
+### Pages (layout from 005/006)
+Logo capsule on top; hero full width; two-line headline (≤ 7 words) and one subline; page dots; a light pill button ("Continue", then "Start tracking"). Pages swipe; the logo, dots and button stay put.
+
+| # | Page | Hero | Phone screen moment | Words |
 |---|---|---|---|---|
-| 1 | Hook | Notes page scrolls endlessly, freezes, dims | "You log every set. It never answers." | – |
-| 2 | Note → verdict | Line breaks into chips (matched geometry), Monday's ghost slides in, bars grow, +10% rolls up | "Log it like a note. We do the maths." | – |
-| 3 | Number to beat | Bar fills set by set past a dashed line; haptic per set; success | "Always know the number to beat." | – |
-| 4 | Try it | Rep slider; % and shoulder glow change live; auto-nudge once | "Try it." / "Drag the reps." | – |
-| 5 | Watch yourself grow | 12-week time-lapse; trained muscles grow, fast then slowing | "Watch yourself grow." | – |
-| 6 | Proof on a clock | Timeline Today → Week 1 → Month 3; curve rises, dips ("recovery"), rises | "Proof, on a clock." | – |
-| 7 | Goal | Build / Lose fat / Both; figure bulks or leans | "What's your goal?" | goal |
-| 8 | History fork | Yes → paste/photo notes → parse → "Found 6 months, bench +24%" and the body fills in. No → log one lift → "This is your Day 1" | "Do you already track?" | history or baseline |
-| 9 | Future Wrapped | Card with their name, "90 days to go" | "We'll tell you when it's ready." | notification permission |
+| 1 | Welcome | Both characters wave on the stand | – (the glow fades in) | "Welcome to Tracko" / "The gym log that talks back." |
+| 2 | Log it like a note | She reaches for the giant phone; surprised → happy | "8 × 12, 11, 10" types in, Monday appears, +10% counts up with the reason | "Log it like a note" / "Type 8 × 12, 11, 10 and Tracko does the maths." |
+| 3 | Number to beat | He does lateral raises; effort → happy | Two sets fill a bar toward Thursday's line; "10 reps ties Thursday. 11 beats it."; the last set beats it; +3% | "Always know the number to beat" / "Every lift opens with what beats last time." |
+| 4 | Get stronger | Both celebrate | The honest curve draws over 12 weeks; +25% | "Watch yourself get stronger" / "Proof you're growing, week by week." |
 
 ### Onboarding rules
-- One idea per screen; the animation carries the explanation.
-- Personal beats generic: show the user's own numbers as early as possible.
-- Ask permissions only when they make sense: Health when choosing "Lose fat", notifications when promising the Wrapped, Photos when importing.
-- Skip jumps to scene 7; story scenes are optional, data scenes are not.
+- One idea per page; the hero and its phone screen carry the explanation.
+- At most four pages. Ask for nothing here: goal, notes import and permissions belong to the first run, each asked when it makes sense (Health when choosing "Lose fat", notifications when promising the Wrapped, Photos when importing).
+- Numbers on the phone come from `DemoContent` and `LiftMath`, in the user's units.
 
 ### Onboarding metrics
-Share reaching a first verdict or baseline; time to that moment; notes-import completion; notification opt-in; day-7 retention.
+Onboarding completion (reaching page 4 and tapping Start tracking); time on each page; then, in the first run: share reaching a first verdict or baseline, notes-import completion, notification opt-in; day-7 retention.
 
 ---
 
@@ -292,6 +293,7 @@ Share reaching a first verdict or baseline; time to that moment; notes-import co
 ---
 
 ## 13. Changelog (newest first)
+- **2026-10-14 · v0.2** Onboarding rebuilt in the style of the priority-1 reference (Any Distance, 005/006) at the owner's direction: 4 pages, 3D heroes with live phone screens, near-black canvas with a soft green glow, light pill button. Green is now the brand colour (merging "gain"). Colour tokens moved to OKLCH (Display P3), type to Geist. Characters v0.2 (vinyl-toy finish). Goal, history and the notification ask moved out of onboarding. The nine v0.1 scenes and the shape body figure were removed (see git history before 7d2a7e5).
 - **2026-10-02** Characters v0.1: female and male clay chibis built in Blender from one script, character sheets, and an 8 s "gym log" clip (transparent master + preview). Added §9.7.
 - **2026-10-02** Started the UI reference library (`design/references/`) ahead of a big visual polish pass; skill §9.0 points to it.
 - **2026-10-02 · v0.1 code** Xcode project (synchronized folders), all nine onboarding scenes, LiftMath + tests, CI that builds, tests and screenshots every scene. Scenes 5, 6 and 9 built (were placeholders). Runs on device via Xcode.

@@ -7,9 +7,9 @@ The product source of truth (features, maths, voice, design system, onboarding s
 ## What's here
 
 - `Tracko.xcodeproj`: iOS 17+, SwiftUI, no dependencies. New files in `Tracko/` or `TrackoTests/` are picked up automatically, with no project edits needed.
-- `Tracko/`: the app. `Core/LiftMath.swift` holds the formulas, `DesignSystem/` the tokens and components, `Onboarding/` the nine scenes.
+- `Tracko/`: the app. `Core/LiftMath.swift` holds the formulas, `DesignSystem/` the tokens (OKLCH colours, Geist type) and components, `Onboarding/` the four onboarding pages and their live phone screens. The 3D heroes are rendered from `characters/build/` into `Assets.xcassets/Onboarding/`.
 - `TrackoTests/`: unit tests that keep the skill's reference examples true.
-- `.github/workflows/ios.yml`: builds, runs the tests and screenshots every onboarding scene on an iPhone simulator for each push. The screenshots are attached to the run as an artifact.
+- `.github/workflows/ios.yml`: builds, runs the tests and screenshots every onboarding page on an iPhone simulator for each push. The screenshots are attached to the run as an artifact.
 
 ## Run it on your iPhone
 
@@ -26,7 +26,7 @@ With a free Apple ID the app stops opening after 7 days. Press Run again to rene
 
 ### Handy while developing
 
-- Tap any story scene to replay its animation.
-- In Debug builds, the launch argument `-TrackoStartScene <0–8>` opens onboarding on that scene. Set it in **Product → Scheme → Edit Scheme → Run → Arguments**.
+- Tap a page's picture to replay its phone animation.
+- In Debug builds, the launch argument `-TrackoStartScene <0–3>` opens onboarding on that page. Set it in **Product → Scheme → Edit Scheme → Run → Arguments**.
 - After onboarding finishes, the placeholder home screen has **Replay onboarding**.
-- Every scene has a SwiftUI preview, so you can open the canvas with ⌥⌘↩.
+- The pages and components have SwiftUI previews, so you can open the canvas with ⌥⌘↩.

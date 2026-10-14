@@ -26,7 +26,13 @@ The onboarding as of v0.1 (the code CI screenshots on every push), kept for befo
 
 ## Patterns
 
-_None yet._
+### P1 · Onboarding like Any Distance (from 005, 006)
+Owner, 2026-10-14: "make my onboarding like this", at most 4 screens, with our 3D characters polished to match the mascot, and green as the brand colour for the glow. Applied in onboarding v0.2 (skill §9, §11).
+
+- **Layout:** logo capsule on top; a 3D diorama hero across the full width; a bold two-line headline and a one-line subline, centred; page dots; a light pill button with an arrow. Pages swipe; the logo, dots and button stay put.
+- **Hero:** a character beside a giant phone that shows the app's real screen, with a few props, on a dark round platform. Matched to 006 by measurement: platform 82% of the screen width, phone 32% and centred, a camera ~5° above the platform; platform top ≈ rgb(33,34,38), side ≈ rgb(11,12,16), phone frame ≈ rgb(17,18,22).
+- **Light:** near-black canvas; one soft glow from the top whose lightness fades evenly to black at about half the screen (in 006: OKLCH L 0.50 at the top, chroma about a third of L). Tracko's glow is brand green.
+- **Mascot finish:** glossy vinyl toy, bold black-and-white colour blocking with one brand colour, big eyes, chunky sneakers, a cap.
 
 ## References
 
@@ -70,6 +76,7 @@ _None yet._
 
 - **What it is:** one onboarding screen from Any Distance, an activity-tracking app: the last of five pages ("Collect'em all Collectibles").
 - **Owner's note:** priority 1. Exactly how the owner wants Tracko's onboarding to look; the 3D character matches Tracko's characters.
+- **Take:** the whole look, as pattern P1.
 - **Screen:** black background with a deep red glow falling from the top; the app's logo in an outlined capsule; a 3D diorama on a dark round platform: a phone showing a running route on a dark map and a "20Km" activity medal, a clay-like 3D cat mascot in a cap and sneakers leaning on it, mushroom-shaped trees, a sneaker and a water bottle; a large bold white headline ("Collect'em all Collectibles") with a one-line subline ("Earn achievements, rewards and digital collectibles."); five page dots; a white capsule "Start →" button; "Sign In" at the top left.
 - **Files:** `005-any-distance-onboarding-collectibles.jpg` (a single screen, sent as a screenshot)
 - **Source:** screenshot from Mobbin (Any Distance, iOS). The whole flow is 006; this is its screen 06.
@@ -78,6 +85,7 @@ _None yet._
 ![006](006-any-distance-onboarding-sheet.jpg)
 
 - **What it is:** the complete onboarding of Any Distance, the app 005 comes from (005 is screen 06 here). 24 screens; Mobbin has no recording of this flow.
+- **Take:** the story pages (03–06) as pattern P1, at most 4 pages; measurements for the hero come from screen 04.
 - **Screens:** the logo glowing in an outlined capsule on black, then the same capsule reading "4.0"; "Welcome to Any Distance" ("A new home for your active lifestyle"); three pages, each a 3D diorama on a dark round platform under a red glow, with the clay cat mascot beside a phone: "Assemble your Active Club" (a club leaderboard), "A fresh start every week" (a dog-walk activity), "Collect'em all Collectibles" (a route and a medal); "Got it? Great! Let's get started" over a grid of fitness-app icons, with "Connect Apple Health", an explainer of the Health permission sheet and the Health sheet itself (off, then all on); "Setup your profile", a blank smiling-capsule avatar under "Your Active Club" set in curved text, on a blue glow, with "Sign in with Apple", the Apple ID sheet and a passcode; the avatar header renamed "John's Active Club", then "Your Phone Number" with the keypad and "Pick your username"; "Let's find your friends" with the contacts permission alert; a friend search with a "Team Any Distance" list (Add, then Requested); the club home, with white 3D figures walking and running together ("Any Distance is better with friends!", Invite friends, How it works) and the tab bar; and a notification ask, with the cat in a helmet peeking over an "Activity Synced" banner ("Allow Push Notifications").
 - **Look:** black throughout, with one coloured glow per section (red for the story pages, blue for the profile setup); bold white centred headlines with a one-line grey subline; white capsule buttons; page dots.
 - **Files:** screens `006-any-distance-onboarding-01.jpg` to `-24.jpg`

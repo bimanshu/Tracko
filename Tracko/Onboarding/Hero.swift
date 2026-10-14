@@ -87,7 +87,7 @@ struct PhoneScreen<Content: View>: View {
             content()
                 .padding(.horizontal, 12)
                 .padding(.top, 32)
-                .padding(.bottom, 14)
+                .padding(.bottom, 18)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             Capsule()
                 .fill(.black)

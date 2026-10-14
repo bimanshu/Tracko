@@ -1,6 +1,6 @@
 # Tracko characters
 
-Two playful clay characters, female and male, who act out the onboarding story: walking into the gym, lifting, logging the set, and celebrating when the number goes up. They're built from one recipe, so they always match.
+Two playful characters, female and male, who act out the onboarding story: lifting, logging the set, and celebrating when the number goes up. They're built from one recipe, so they always match. Since v0.2 they have a glossy vinyl-toy finish, like the Any Distance mascot the owner pointed to (`design/references/005`, `006`).
 
 ![The cast](cast.png)
 
@@ -14,8 +14,25 @@ Two playful clay characters, female and male, who act out the onboarding story: 
 | `female/gym-log.webm`, `male/gym-log.webm` | The same clip with a transparent background and no pop-up: the master for the app |
 | `gym-log-timing.json` | Frame and second marks for each beat; the app syncs its overlay (the +% pop-up) to `popup` |
 | `build/` | The Blender script that builds and animates the characters, and the render pipeline |
+| `../Tracko/Assets.xcassets/Onboarding/` | The onboarding heroes, rendered by `render_all.py heroes` (see below) |
+
+## Onboarding heroes
+
+Each onboarding page has a diorama: the characters on a round platform, beside a giant phone for the pages that show the app. All heroes share one camera and one platform, so the stage holds still while the pages swipe. Matched to the reference by measurement: the platform spans 82% of the image width and the phone 32%, centred; the camera sits about 5° above the platform and frames with lens shift; the platform and phone frame colours match the reference's.
+
+| Hero | Characters | Faces |
+|---|---|---|
+| `hero-welcome` | Both, waving | happy |
+| `hero-log-a`, `-b` | She reaches for the phone | surprised, then happy |
+| `hero-beat-a`, `-b` | He does a lateral raise | effort, then happy |
+| `hero-grow` | Both celebrating | happy |
+
+The phone's screen is left dark: the app draws its live screen there, at the rectangle the pipeline writes into `Tracko/Onboarding/HeroRender.swift`, so the numbers come from `LiftMath` and follow the user's units. The `-a`/`-b` pairs are the same shot with a different face; the app swaps them when its moment lands.
 
 ## The gym log clip
+
+The clip still has the v0.1 look (pastel clothes, smaller eyes); re-render it with `anim` and `post` to update it.
+
 
 8 seconds at 24 fps (192 frames):
 
@@ -34,12 +51,12 @@ The pop-up isn't rendered into the transparent clip, because its number has to c
 
 ## Style rules
 
-- **Chibi clay.** The head is about 40% of the height, the limbs are short and rounded, and everything is matte, smooth and made from soft rounded shapes. The reference is soft 3D clay animals, made human.
-- **Faces stay simple.** Dot eyes with one sparkle, pink blush, a small nose, a line smile. Expressions swap instantly rather than morphing: neutral, effort (`> <`), surprised, happy (`^ ^`).
-- **The two characters differ only in their spec:** skin, hair (bun with a side fringe, or a quiff), outfit (leggings, or shorts) and build. Proportions, faces and animation are shared, so any new clip works for both.
-- **Colours never borrow the app's signals.** Clothes are soft lilac, mint, indigo and charcoal. No red (red means trained muscles) and no Tracko yellow or green (target and gain).
-- **Props are oversized** (dumbbells, phone) so they read at onboarding size.
-- **Lit for the dark app.** A warm key light, a cool fill, and two shadowless rim lights that keep dark hair separate from the ink background.
+- **Chibi vinyl toy.** The head is about 40% of the height, the limbs are short and rounded, and every part is a smooth rounded shape under a glossy clear coat, like a collectible figure.
+- **Faces stay simple.** Big glossy eyes with a thin white rim and two sparkles, pink blush, a small nose, a line smile. Expressions swap instantly rather than morphing: neutral, effort (`> <`), surprised, happy (`^ ^`).
+- **The two characters differ only in their spec:** skin, hair (bun with a side fringe, or a quiff under a cap), outfit (leggings, or shorts and socks) and build. Proportions, faces and poses are shared, so any new shot works for both.
+- **Black, white and brand green.** They mirror each other: she wears a white top and black leggings, he a black top and white shorts with a white cap. Brand green appears only in small details (hair tie, chest badge, cap badge, midsoles). No red (red is reserved for trained muscles) and no yellow (targets).
+- **Props are oversized** (dumbbells, kettlebell, bumper plate, bottle, a giant phone) so they read at onboarding size.
+- **Lit for the dark app.** A warm key, a cool fill, a warm side light, a brand-green glow from behind and above (kept off the platform with light linking), and cool rims.
 
 ## Re-rendering and adding clips
 
@@ -49,6 +66,7 @@ You need Blender 4.5 LTS, Pillow and ffmpeg (libx264, libvpx-vp9).
 python3 characters/build/render_all.py stills   # sheets and cast.png
 python3 characters/build/render_all.py anim     # clip frames (about 25 min per character on 4 cores)
 python3 characters/build/render_all.py post     # preview .mp4, transparent .webm, timing.json
+python3 characters/build/render_all.py heroes   # onboarding heroes -> the app's asset catalog (about 3 min each)
 ```
 
 Set `BLENDER=/path/to/blender` if it isn't at the default path. To change a character, edit `SPECS` in `build/tracko_characters.py`. To add a clip, write another `animate_…` function next to `animate_gym_log`, using the same pose helpers (`set_arm`, `set_leg`, `key_expression`).

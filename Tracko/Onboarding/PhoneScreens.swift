@@ -10,7 +10,7 @@ private enum PhoneText {
     static let note = TypeScale.illustration(.regular, 14)
     static let detail = TypeScale.illustration(.regular, 10.5)
     static let figure = TypeScale.illustration(.extraBold, 24)
-    static let score = TypeScale.illustration(.extraBold, 46)
+    static let score = TypeScale.illustration(.extraBold, 42)
 }
 
 // MARK: - Log it like a note
@@ -214,29 +214,31 @@ struct BeatPhoneScreen: View {
             )
     }
 
+    /// The bar fills set by set toward Thursday's total, marked by a line labelled underneath.
     private var progressBar: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            GeometryReader { proxy in
-                let width = proxy.size.width
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Theme.surfaceRaised)
-                    Capsule()
-                        .fill(beaten ? Theme.accent : Theme.textPrimary)
-                        .frame(width: width * min(volumeSoFar / scaleMax, 1))
-                    // Thursday's total, the line to beat.
-                    Rectangle()
-                        .fill(Theme.textSecondary)
-                        .frame(width: 2, height: 18)
-                        .offset(x: width * target / scaleMax - 1)
-                }
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let marker = width * target / scaleMax
+            ZStack(alignment: .topLeading) {
+                Capsule()
+                    .fill(Theme.surfaceRaised)
+                    .frame(height: 10)
+                Capsule()
+                    .fill(beaten ? Theme.accent : Theme.textPrimary)
+                    .frame(width: width * min(volumeSoFar / scaleMax, 1), height: 10)
+                Capsule()
+                    .fill(Theme.textSecondary)
+                    .frame(width: 2, height: 16)
+                    .offset(x: marker - 1, y: -3)
+                Text("Thursday")
+                    .font(PhoneText.label)
+                    .foregroundStyle(Theme.textTertiary)
+                    .fixedSize()
+                    .frame(width: marker, alignment: .trailing)
+                    .offset(y: 18)
             }
-            .frame(height: 10)
-            Text("Thursday")
-                .font(PhoneText.label)
-                .foregroundStyle(Theme.textTertiary)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 4)
         }
+        .frame(height: 30)
     }
 
     @MainActor
@@ -299,7 +301,7 @@ struct GrowPhoneScreen: View {
                     .padding(.top, 2)
 
                 GrowthChart(curve: demo.growthCurve, drawn: drawn)
-                    .frame(height: 118)
+                    .frame(height: 96)
                     .padding(.top, 16)
 
                 HStack {
