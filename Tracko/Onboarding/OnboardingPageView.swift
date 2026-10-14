@@ -51,7 +51,7 @@ struct OnboardingPageView: View {
 }
 
 /// "Welcome to" over the Tracko wordmark, read as one heading.
-private struct WelcomeTitle: View {
+struct WelcomeTitle: View {
     @ScaledMetric(relativeTo: .largeTitle) private var tracking = 52 * TypeScale.wordmarkTracking
     @Environment(\.legibilityWeight) private var legibilityWeight
 

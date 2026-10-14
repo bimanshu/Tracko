@@ -86,7 +86,7 @@ jobs:
           prepare "$MAIN"
           shots "$MAIN" main
           # Onboarding variants (Debug harness): the same pages in each candidate layout.
-          for variant in editorial window; do
+          for variant in window spotlight; do
             for scene in 0 1 2 3; do
               xcrun simctl launch --terminate-running-process "$MAIN" "$BUNDLE" -TrackoStartScene "$scene" -TrackoVariant "$variant" > /dev/null
               sleep 8

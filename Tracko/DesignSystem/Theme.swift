@@ -193,6 +193,6 @@ enum Motion {
     static let grow = Animation.spring(duration: 1.2, bounce: 0.05)
     /// Crossfades, and the Reduce Motion stand-in for movement.
     static let fade = Animation.easeInOut(duration: 0.35)
-    /// An expression swap on a character: fast enough to read as a cut.
-    static let faceSwap = Animation.easeOut(duration: 0.12)
+    /// An expression swap on a character: fast enough to read as a cut, even for a blink.
+    static let faceSwap = Animation.linear(duration: 0.05)
 }

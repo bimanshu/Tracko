@@ -11,13 +11,14 @@ struct PhoneScreenRect {
     let corner: CGFloat
 }
 
-/// One onboarding hero: the rendered diorama (characters/build), an optional second render with
-/// the payoff expression, and a live screen drawn over the giant phone, so its numbers come from
-/// `LiftMath` and follow the user's units.
+/// One onboarding hero: the rendered diorama (characters/build), shown in one of its faces, and a
+/// live screen drawn over the giant phone, so its numbers come from `LiftMath` and follow the
+/// user's units. Every face is stacked and only `face` shows, so a swap is a cut, never a reload.
 struct HeroStage<Screen: View>: View {
-    let image: String
-    var payoffImage: String?
-    var showsPayoff = false
+    /// Every face this hero can show (renders of the same shot with different expressions).
+    let frames: [String]
+    /// The face showing now: one of `frames`.
+    let face: String
     var screenRect: PhoneScreenRect?
     @ViewBuilder var screen: () -> Screen
 
@@ -27,15 +28,13 @@ struct HeroStage<Screen: View>: View {
             .overlay {
                 GeometryReader { proxy in
                     ZStack(alignment: .topLeading) {
-                        Image(image)
-                            .resizable()
-                        if let payoffImage {
-                            // Expressions swap like a cut; the short fade only hides the seam.
-                            Image(payoffImage)
+                        ForEach(frames, id: \.self) { frame in
+                            Image(frame)
                                 .resizable()
-                                .opacity(showsPayoff ? 1 : 0)
-                                .animation(Motion.faceSwap, value: showsPayoff)
+                                .opacity(frame == face ? 1 : 0)
                         }
+                        // Expressions swap like a cut; the 50 ms fade only hides the seam.
+                        .animation(Motion.faceSwap, value: face)
                         if let screenRect {
                             PhoneScreenLayer(rect: screenRect, size: proxy.size, content: screen())
                         }
@@ -47,8 +46,8 @@ struct HeroStage<Screen: View>: View {
 }
 
 extension HeroStage where Screen == EmptyView {
-    init(image: String) {
-        self.init(image: image, screen: { EmptyView() })
+    init(frames: [String], face: String) {
+        self.init(frames: frames, face: face, screen: { EmptyView() })
     }
 }
 

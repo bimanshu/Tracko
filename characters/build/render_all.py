@@ -5,6 +5,7 @@
   python3 characters/build/render_all.py anim     # gym log frames (slow: ~20 min per character on 4 cores)
   python3 characters/build/render_all.py post     # frames -> preview .mp4 + transparent .webm, timing.json
   python3 characters/build/render_all.py heroes   # onboarding dioramas -> the app's asset catalog
+  python3 characters/build/render_all.py heroes hero-log-b-open ...   # just those
 
 Needs Blender 4.5 LTS (set BLENDER=/path/to/blender), Pillow and ffmpeg with libx264 and libvpx-vp9.
 Rendered frames go to characters/build/out/ (git-ignored); only finished files are committed.
@@ -123,39 +124,61 @@ def cast():
 
 # --------------------------------------------------------------------------- onboarding heroes
 
-# (scene, variant). Scenes with two variants swap the face when the app's moment lands.
-HEROES = [("welcome", "a"), ("log", "a"), ("log", "b"), ("beat", "a"), ("beat", "b"), ("grow", "a")]
-TWO_FACES = {"log", "beat"}
+# (asset name, scene, variant, face override). The -a/-b pairs are the same shot with a different
+# face, swapped when the moment lands; -open and -blink frames drive the subtle idle expressions.
+HEROES = [
+    ("hero-welcome", "welcome", "a", None),
+    ("hero-log-a", "log", "a", None),
+    ("hero-log-b", "log", "b", None),
+    ("hero-beat-a", "beat", "a", None),
+    ("hero-beat-b", "beat", "b", None),
+    ("hero-grow", "grow", "a", None),
+    # Idle expressions: a calm open-eyed smile and a blink for each smiling face, and a blink for
+    # the surprised one.
+    ("hero-welcome-open", "welcome", "a", "neutral"),
+    ("hero-welcome-blink", "welcome", "a", "blink"),
+    ("hero-log-a-blink", "log", "a", "surprised_blink"),
+    ("hero-log-b-open", "log", "b", "neutral"),
+    ("hero-log-b-blink", "log", "b", "blink"),
+    ("hero-beat-b-open", "beat", "b", "neutral"),
+    ("hero-beat-b-blink", "beat", "b", "blink"),
+    ("hero-grow-open", "grow", "a", "neutral"),
+    ("hero-grow-blink", "grow", "a", "blink"),
+]
 
 
-def hero_name(scene, variant):
-    return f"hero-{scene}-{variant}" if scene in TWO_FACES else f"hero-{scene}"
-
-
-def heroes():
+def heroes(only=None):
+    """Renders every hero, or just the names given, into the asset catalog."""
     folder = os.path.join(OUT, "heroes")
     os.makedirs(folder, exist_ok=True)
     os.makedirs(ASSETS, exist_ok=True)
     json.dump({"info": {"author": "xcode", "version": 1}, "properties": {"provides-namespace": False}},
               open(os.path.join(ASSETS, "Contents.json"), "w"), indent=2)
-    rects, size = {}, None
-    for scene, variant in HEROES:
-        name = hero_name(scene, variant)
+    for name, scene, variant, face in HEROES:
+        if only and name not in only:
+            continue
         png = os.path.join(folder, name + ".png")
-        rect = os.path.join(folder, scene + ".json")
-        blender("--mode", "hero", "--scene", scene, "--variant", variant, "--samples", "96",
-                "--out", png, "--rect-out", rect)
-        info = json.load(open(rect))
-        size = info["size"]
-        if info["screen"]:
-            rects[scene] = info["screen"]
+        args = ["--mode", "hero", "--scene", scene, "--variant", variant, "--samples", "96",
+                "--out", png, "--rect-out", os.path.join(folder, scene + ".json")]
+        if face:
+            args += ["--face", face]
+        blender(*args)
         imageset = os.path.join(ASSETS, name + ".imageset")
         os.makedirs(imageset, exist_ok=True)
         Image.open(png).save(os.path.join(imageset, name + ".png"), optimize=True)
         json.dump({"images": [{"filename": name + ".png", "idiom": "universal", "scale": "3x"}],
                    "info": {"author": "xcode", "version": 1}},
                   open(os.path.join(imageset, "Contents.json"), "w"), indent=2)
-        print("rendered", name)
+        print("rendered", name, flush=True)
+    # Every scene's camera is the same, so the screen rectangles come from whichever renders exist.
+    rects, size = {}, None
+    for scene in dict.fromkeys(scene for _, scene, _, _ in HEROES):  # page order, for stable diffs
+        path = os.path.join(folder, scene + ".json")
+        if os.path.exists(path):
+            info = json.load(open(path))
+            size = info["size"]
+            if info["screen"]:
+                rects[scene] = info["screen"]
     write_hero_swift(size, rects)
 
 
@@ -255,6 +278,9 @@ def post():
 
 if __name__ == "__main__":
     steps = {"stills": stills, "anim": anim, "post": post, "heroes": heroes}
-    if len(sys.argv) != 2 or sys.argv[1] not in steps:
+    if len(sys.argv) < 2 or sys.argv[1] not in steps:
         sys.exit(__doc__)
-    steps[sys.argv[1]]()
+    if sys.argv[1] == "heroes":
+        heroes(set(sys.argv[2:]) or None)
+    else:
+        steps[sys.argv[1]]()

@@ -400,7 +400,7 @@ def build_character(kind):
     ellipsoid("nose", (0.017, 0.014, 0.014), r.head, (0, -0.199, 0.168), m["skin_shade"])
 
     # Face parts, each swappable for expressions.
-    r.eyes, r.sparkles, r.brows, r.happy_eyes, r.effort_eyes, r.blush = [], [], [], [], [], []
+    r.eyes, r.sparkles, r.brows, r.happy_eyes, r.effort_eyes, r.blush, r.lids = [], [], [], [], [], [], []
     for side in (-1, 1):
         eye_pivot = empty(f"eye_{side}", r.head, (side * 0.076, -0.186, 0.2))
         ellipsoid(f"sclera_{side}", (0.041, 0.012, 0.049), eye_pivot, (0, 0.002, 0), m["sclera"], segments=32)
@@ -418,6 +418,11 @@ def build_character(kind):
         arc(f"effort_arc_{side}", [(-tip, 0, 0.017), (tip, -0.004, 0), (-tip, 0, -0.017)], squeeze, m["eye"], 0.0075)
         squeeze.scale = (0, 0, 0)
         r.effort_eyes.append(squeeze)
+        # A blink: closed lids curving gently down, where the open eye sits.
+        lid = empty(f"lid_{side}", r.head, (side * 0.076, -0.192, 0.196))
+        arc(f"lid_arc_{side}", [(-0.03, 0, 0.007), (0, -0.007, -0.007), (0.03, 0, 0.007)], lid, m["eye"], 0.0075)
+        lid.scale = (0, 0, 0)
+        r.lids.append(lid)
         brow = empty(f"brow_{side}", r.head, (side * 0.074, -0.176, 0.272))
         ellipsoid(f"brow_shape_{side}", (0.026, 0.007, 0.007), brow, (0, 0, 0), m["hair"], segments=24)
         r.brows.append(brow)
@@ -510,6 +515,10 @@ EXPRESSIONS = {
     "effort": {"eye": 0, "brow_tilt": 18, "brow_lift": -0.008, "smile": 0, "open": 1, "happy": 0, "squeeze": 1},
     "surprised": {"eye": 1.18, "brow_tilt": -8, "brow_lift": 0.014, "smile": 0, "open": 1, "happy": 0, "squeeze": 0},
     "happy": {"eye": 0, "brow_tilt": -6, "brow_lift": 0.01, "smile": 0, "open": 1, "happy": 1, "squeeze": 0},
+    # Blinks, for the onboarding's idle expressions: the same face with the lids closed.
+    "blink": {"eye": 0, "brow_tilt": 0, "brow_lift": -0.003, "smile": 1, "open": 0, "happy": 0, "squeeze": 0, "lids": 1},
+    "surprised_blink": {"eye": 0, "brow_tilt": -8, "brow_lift": 0.012, "smile": 0, "open": 1, "happy": 0, "squeeze": 0,
+                        "lids": 1},
 }
 
 
@@ -519,10 +528,11 @@ def set_expression(r, name):
         r.eyes[side_index].scale = (1, 1, e["eye"]) if e["eye"] else (0, 0, 0)
         r.happy_eyes[side_index].scale = (1, 1, 1) if e["happy"] else (0, 0, 0)
         r.effort_eyes[side_index].scale = (1, 1, 1) if e["squeeze"] else (0, 0, 0)
+        r.lids[side_index].scale = (1, 1, 1) if e.get("lids") else (0, 0, 0)
         r.brows[side_index].rotation_euler = (0, math.radians(side * e["brow_tilt"]), 0)
         r.brows[side_index].location.z = 0.272 + e["brow_lift"]
     r.smile.scale = (1, 1, 1) if e["smile"] else (0, 0, 0)
-    small_open = name == "effort"
+    small_open = name in ("effort", "surprised_blink")
     if e["open"]:
         r.open_mouth.scale = (0.55, 1, 0.45) if small_open else (1, 1, 1)
     else:
@@ -530,7 +540,7 @@ def set_expression(r, name):
 
 
 def face_parts(r):
-    return r.eyes + r.happy_eyes + r.effort_eyes + r.brows + [r.smile, r.open_mouth]
+    return r.eyes + r.happy_eyes + r.effort_eyes + r.lids + r.brows + [r.smile, r.open_mouth]
 
 
 # ---------------------------------------------------------------------------
@@ -945,7 +955,7 @@ def arms_up(r, spread=134):
 
 
 # Each scene: (camera location, camera target, lens), the phone's spot (or None) and a stage function.
-def stage_welcome(variant):
+def stage_welcome(variant, face=None):
     her, him = build_character("female"), build_character("male")
     place(her, (-0.32, -0.12, 0), 16)
     place(him, (0.32, -0.12, 0), -16)
@@ -953,8 +963,8 @@ def stage_welcome(variant):
     wave(him, 1)
     her.head.rotation_euler = (math.radians(-4), math.radians(-7), 0)
     him.head.rotation_euler = (math.radians(-4), math.radians(7), 0)
-    set_expression(her, "happy")
-    set_expression(him, "happy")
+    set_expression(her, face or "happy")
+    set_expression(him, face or "happy")
     kettlebell((0.84, 0.02, 0), -20)
     bumper_plate((-0.86, 0.2, 0.215), tilt=(-8, 0, 18))
     water_bottle((-0.58, 0.46, 0))
@@ -962,19 +972,19 @@ def stage_welcome(variant):
 
 
 # With a phone, the character stands to its left and props sit to its right, as in the reference.
-def stage_log(variant):
+def stage_log(variant, face=None):
     her = build_character("female")
     place(her, (-0.76, -0.2, 0), 32)
     set_arm(her, 1, abduct=30, flex=78, inward=6)
     set_arm(her, 0, abduct=14, flex=-6)
     her.head.rotation_euler = (math.radians(-10), math.radians(-5), math.radians(12))
-    set_expression(her, "surprised" if variant == "a" else "happy")
+    set_expression(her, face or ("surprised" if variant == "a" else "happy"))
     water_bottle((0.72, -0.24, 0))
     floor_dumbbell((0.84, 0.18, 0), 28)
     return [her]
 
 
-def stage_beat(variant):
+def stage_beat(variant, face=None):
     him = build_character("male")
     place(him, (-0.78, -0.2, 0), 22)
     set_arm(him, 0, abduct=80, flex=6)
@@ -982,13 +992,13 @@ def stage_beat(variant):
     set_arm(him, 1, abduct=12, flex=4)
     him.body.location.z = 0.244
     him.head.rotation_euler = (math.radians(-3), 0, math.radians(10))
-    set_expression(him, "effort" if variant == "a" else "happy")
+    set_expression(him, face or ("effort" if variant == "a" else "happy"))
     kettlebell((0.76, -0.18, 0), 15)
     bumper_plate((0.64, 0.3, 0.215), tilt=(-10, 0, -22))
     return [him]
 
 
-def stage_grow(variant):
+def stage_grow(variant, face=None):
     her, him = build_character("female"), build_character("male")
     place(her, (-0.78, -0.2, 0.07), 14)
     place(him, (0.78, -0.2, 0), -14)
@@ -999,8 +1009,8 @@ def stage_grow(variant):
     set_arm(him, 0, abduct=34, flex=46, inward=24)
     her.head.rotation_euler = (math.radians(-8), 0, 0)
     him.head.rotation_euler = (math.radians(-6), 0, 0)
-    set_expression(her, "happy")
-    set_expression(him, "happy")
+    set_expression(her, face or "happy")
+    set_expression(him, face or "happy")
     water_bottle((1.0, 0.3, 0))
     return [her, him]
 
@@ -1060,13 +1070,13 @@ def screen_rect(screen, camera):
             "corner": round((PHONE["corner"] - PHONE["bezel"]) / (2 * hw) * w, 5)}
 
 
-def render_hero(name, variant, out, rect_out, samples):
+def render_hero(name, variant, out, rect_out, samples, face=None):
     import json
 
     stage, has_phone = HERO_SCENES[name]
     setup_scene(HERO_SIZE[0], samples, lighting="hero", height=HERO_SIZE[1])
     build_plinth()
-    stage(variant)
+    stage(variant, face)
     camera = link(bpy.data.objects.new("camera", bpy.data.cameras.new("camera")))
     bpy.context.scene.camera = camera
     frame_camera(camera)
@@ -1096,6 +1106,7 @@ def main():
     parser.add_argument("--scene", choices=HERO_SCENES.keys(), default="welcome")
     parser.add_argument("--variant", choices=("a", "b"), default="a")
     parser.add_argument("--rect-out", default=None)
+    parser.add_argument("--face", choices=EXPRESSIONS.keys(), default=None, help="hero: override the stage's expression")
     parser.add_argument("--scale", type=float, default=1.0, help="hero resolution scale, for quick tests")
     parser.add_argument("--view", choices=VIEWS.keys(), default="front")
     parser.add_argument("--expression", choices=EXPRESSIONS.keys(), default="neutral")
@@ -1112,7 +1123,7 @@ def main():
     if args.mode == "hero":
         global HERO_SIZE
         HERO_SIZE = (round(HERO_SIZE[0] * args.scale), round(HERO_SIZE[1] * args.scale))
-        render_hero(args.scene, args.variant, args.out, args.rect_out, args.samples)
+        render_hero(args.scene, args.variant, args.out, args.rect_out, args.samples, args.face)
         return
     setup_scene(args.res, args.samples)
     rig = build_character(args.character)

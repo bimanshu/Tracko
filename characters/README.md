@@ -29,6 +29,8 @@ Each onboarding page has a diorama: the characters on a round platform, beside a
 
 The phone's screen is left dark: the app draws its live screen there, at the rectangle the pipeline writes into `Tracko/Onboarding/HeroRender.swift`, so the numbers come from `LiftMath` and follow the user's units. The `-a`/`-b` pairs are the same shot with a different face; the app swaps them when its moment lands.
 
+**Idle expressions.** Each smiling face also has an `-open` render (a calm, open-eyed smile) and a `-blink` render (lids closed), and the surprised face has `hero-log-a-blink`. The app cuts between them to make the characters blink every few seconds and ease from a laugh into a smile, very subtly, and never with Reduce Motion. Render just these with `render_all.py heroes hero-grow-open hero-grow-blink …`.
+
 ## The gym log clip
 
 The clip still has the v0.1 look (pastel clothes, smaller eyes); re-render it with `anim` and `post` to update it.
@@ -52,7 +54,7 @@ The pop-up isn't rendered into the transparent clip, because its number has to c
 ## Style rules
 
 - **Chibi vinyl toy.** The head is about 40% of the height, the limbs are short and rounded, and every part is a smooth rounded shape under a glossy clear coat, like a collectible figure.
-- **Faces stay simple.** Big glossy eyes with a thin white rim and two sparkles, pink blush, a small nose, a line smile. Expressions swap instantly rather than morphing: neutral, effort (`> <`), surprised, happy (`^ ^`).
+- **Faces stay simple.** Big glossy eyes with a thin white rim and two sparkles, pink blush, a small nose, a line smile. Expressions swap instantly rather than morphing: neutral, effort (`> <`), surprised, happy (`^ ^`), and blinks (closed lids curving down) for the idle animation.
 - **The two characters differ only in their spec:** skin, hair (bun with a side fringe, or a quiff under a cap), outfit (leggings, or shorts and socks) and build. Proportions, faces and poses are shared, so any new shot works for both.
 - **Black, white and brand green.** They mirror each other: she wears a white top and black leggings, he a black top and white shorts with a white cap. Brand green appears only in small details (hair tie, chest badge, cap badge, midsoles). No red (red is reserved for trained muscles) and no yellow (targets).
 - **Props are oversized** (dumbbells, kettlebell, bumper plate, bottle, a giant phone) so they read at onboarding size.
