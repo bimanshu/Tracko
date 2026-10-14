@@ -85,6 +85,14 @@ jobs:
           COMPACT="${{ steps.sims.outputs.compact }}"
           prepare "$MAIN"
           shots "$MAIN" main
+          # Onboarding variants (Debug harness): the same pages in each candidate layout.
+          for variant in editorial window; do
+            for scene in 0 1 2 3; do
+              xcrun simctl launch --terminate-running-process "$MAIN" "$BUNDLE" -TrackoStartScene "$scene" -TrackoVariant "$variant" > /dev/null
+              sleep 8
+              xcrun simctl io "$MAIN" screenshot "screenshots/variant-${variant}-scene-${scene}.png" > /dev/null 2>&1
+            done
+          done
           # Increase Contrast: muted text and dots should brighten.
           if xcrun simctl ui "$MAIN" increase_contrast enabled; then
             shots "$MAIN" main-contrast

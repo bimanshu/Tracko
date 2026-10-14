@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Page chrome
 
@@ -140,26 +141,32 @@ struct PageDots: View {
 /// A page headline: Geist Bold at 1.1 line height, balanced over its lines.
 struct PageHeadline: View {
     let text: String
+    var style = TypeScale.headline
+    var alignment: NSTextAlignment = .center
 
-    init(_ text: String) {
+    init(_ text: String, style: BalancedText.Style = TypeScale.headline, alignment: NSTextAlignment = .center) {
         self.text = text
+        self.style = style
+        self.alignment = alignment
     }
 
     var body: some View {
-        BalancedText(text: text, style: TypeScale.headline, isHeader: true)
+        BalancedText(text: text, style: style, alignment: alignment, isHeader: true)
     }
 }
 
 /// The line under a headline, balanced so it never ends on one short word.
 struct PageSubline: View {
     let text: String
+    var alignment: NSTextAlignment = .center
 
-    init(_ text: String) {
+    init(_ text: String, alignment: NSTextAlignment = .center) {
         self.text = text
+        self.alignment = alignment
     }
 
     var body: some View {
-        BalancedText(text: text, style: TypeScale.body, color: Theme.textSecondary)
+        BalancedText(text: text, style: TypeScale.body, color: Theme.textSecondary, alignment: alignment)
     }
 }
 

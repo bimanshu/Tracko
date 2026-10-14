@@ -35,7 +35,7 @@ struct OnboardingFlowView: View {
                 .entrance(3)
 
                 Button(action: advance) {
-                    AdvanceLabel(title: page.isLast ? "Start tracking" : "Continue")
+                    AdvanceLabel(title: page.buttonTitle)
                 }
                 .buttonStyle(PrimaryButtonStyle(hasTrailingIcon: true))
                 .animation(Motion.snappy, value: page.isLast)

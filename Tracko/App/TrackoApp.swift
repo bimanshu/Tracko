@@ -15,8 +15,14 @@ struct TrackoApp: App {
                     HomePlaceholderView { onboardingComplete = false }
                         .transition(.opacity)
                 } else {
+                    #if DEBUG
+                    // Debug builds host the onboarding variants behind a picker (Onboarding/Variants).
+                    VariantHost { onboardingComplete = true }
+                        .transition(.opacity)
+                    #else
                     OnboardingFlowView { onboardingComplete = true }
                         .transition(.opacity)
+                    #endif
                 }
             }
             .animation(Motion.fade, value: onboardingComplete)

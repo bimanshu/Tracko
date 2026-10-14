@@ -24,6 +24,7 @@ struct BalancedText: UIViewRepresentable {
     let text: String
     let style: Style
     var color: Color = Theme.textPrimary
+    var alignment: NSTextAlignment = .center
     var isHeader = false
 
     func makeUIView(context: Context) -> UILabel {
@@ -77,7 +78,7 @@ struct BalancedText: UIViewRepresentable {
         let font = UIFontMetrics(forTextStyle: style.textStyle).scaledFont(for: base, compatibleWith: traits)
 
         let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = .center
+        paragraph.alignment = alignment
         paragraph.lineBreakMode = .byWordWrapping
         paragraph.minimumLineHeight = font.pointSize * style.lineHeight
         paragraph.maximumLineHeight = font.pointSize * style.lineHeight
