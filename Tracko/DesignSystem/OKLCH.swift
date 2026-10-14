@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// A colour in OKLCH: perceptual lightness (0–1), chroma (0 to about 0.37) and hue in degrees.
 ///
@@ -20,6 +21,11 @@ struct OKLCH: Hashable, Sendable {
     var color: Color {
         let (r, g, b) = displayP3
         return Color(.displayP3, red: r, green: g, blue: b, opacity: 1)
+    }
+
+    var uiColor: UIColor {
+        let (r, g, b) = displayP3
+        return UIColor(displayP3Red: r, green: g, blue: b, alpha: 1)
     }
 
     /// Gamma-encoded Display P3 components, clipped to 0...1.
@@ -56,6 +62,27 @@ struct OKLCH: Hashable, Sendable {
         let a = first.relativeLuminance
         let b = second.relativeLuminance
         return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+    }
+
+    /// APCA (APCA-W3 0.0.98G-4g) lightness contrast of `text` on `background`, Lc. Negative
+    /// means light text on a dark background; compare the absolute value. Uses the clipped sRGB
+    /// values, as the APCA reference does.
+    static func apca(text: OKLCH, background: OKLCH) -> Double {
+        func luminance(_ colour: OKLCH) -> Double {
+            let (r, g, b) = colour.linearSRGB
+            let encoded = [r, g, b].map { encode($0) }
+            let y = 0.2126729 * pow(encoded[0], 2.4) + 0.7151522 * pow(encoded[1], 2.4) + 0.0721750 * pow(encoded[2], 2.4)
+            return y > 0.022 ? y : y + pow(0.022 - y, 1.414)
+        }
+        let yText = luminance(text)
+        let yBackground = luminance(background)
+        guard abs(yBackground - yText) >= 0.0005 else { return 0 }
+        if yBackground > yText {
+            let sapc = (pow(yBackground, 0.56) - pow(yText, 0.57)) * 1.14
+            return sapc < 0.1 ? 0 : (sapc - 0.027) * 100
+        }
+        let sapc = (pow(yBackground, 0.65) - pow(yText, 0.62)) * 1.14
+        return sapc > -0.1 ? 0 : (sapc + 0.027) * 100
     }
 
     /// Mixes two colours in OKLab: `amount` 0 is `self`, 1 is `other`. OKLab keeps the

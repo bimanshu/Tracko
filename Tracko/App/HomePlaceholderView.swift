@@ -8,7 +8,7 @@ struct HomePlaceholderView: View {
         VStack(spacing: Space.l) {
             Spacer()
             PageHeadline("You’re set")
-            PageSubline("Logging, the number to beat and your first growth report come next.")
+            PageSubline("Logging, the number to beat and your first growth report are next.")
             Spacer()
             Button("Replay onboarding", action: replayOnboarding)
                 .buttonStyle(SecondaryButtonStyle())

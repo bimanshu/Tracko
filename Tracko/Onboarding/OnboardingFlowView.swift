@@ -6,15 +6,18 @@ struct OnboardingFlowView: View {
     var onFinish: () -> Void
 
     @State private var page = OnboardingPage.launchPage
+    @State private var hasEntered = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { proxy in
-            // Spacing follows the reference on a 6.1" phone and tightens on smaller screens.
+            // Spacing follows the reference (design/references/006): the button's foot sits about
+            // 8% of the usable height above the home indicator. Smaller screens tighten.
             let isCompact = proxy.size.height < 700
             VStack(spacing: 0) {
                 LogoMark(isCompact: isCompact)
                     .padding(.top, isCompact ? Space.s : 40)
+                    .entrance(0)
 
                 TabView(selection: $page) {
                     ForEach(OnboardingPage.allCases) { item in
@@ -29,19 +32,23 @@ struct OnboardingFlowView: View {
                     if let target = OnboardingPage(rawValue: index) { move(to: target) }
                 }
                 .padding(.top, Space.l)
+                .entrance(3)
 
                 Button(action: advance) {
                     AdvanceLabel(title: page.isLast ? "Start tracking" : "Continue")
                 }
-                .buttonStyle(PrimaryButtonStyle())
+                .buttonStyle(PrimaryButtonStyle(hasTrailingIcon: true))
                 .animation(Motion.snappy, value: page.isLast)
                 .padding(.top, isCompact ? Space.l : Space.xxl)
-                .padding(.bottom, isCompact ? Space.m : 48)
+                .padding(.bottom, isCompact ? Space.l : 60)
+                .entrance(4)
             }
             .frame(maxWidth: .infinity)
         }
+        .environment(\.hasEntered, hasEntered)
         .background { GlowBackground() }
         .sensoryFeedback(.selection, trigger: page)
+        .onAppear { hasEntered = true }
     }
 
     private func advance() {

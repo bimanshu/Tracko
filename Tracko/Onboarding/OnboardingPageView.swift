@@ -33,9 +33,12 @@ struct OnboardingPageView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(heroDescription)
                 .accessibilityAddTraits(.isImage)
+                .accessibilityAction(named: "Replay animation") { replay += 1 }
+                .entrance(1)
             words
                 .padding(.horizontal, Space.gutter)
-                .padding(.top, Space.m)
+                .padding(.top, Space.l)
+                .entrance(2)
             Spacer(minLength: 0)
         }
     }
@@ -88,17 +91,17 @@ struct OnboardingPageView: View {
 
     @ViewBuilder
     private var words: some View {
-        VStack(spacing: Space.m) {
+        VStack(spacing: 10) {
             switch page {
             case .welcome:
                 WelcomeTitle()
                 PageSubline("The gym log that talks back.")
             case .log:
                 PageHeadline("Log it like a note")
-                PageSubline("Type \(demo.noteLine(demo.thursday)) and Tracko does the maths.")
+                PageSubline("Type \(demo.noteLine(demo.thursday).keptTogether) and Tracko does the maths.")
             case .beat:
                 PageHeadline("Always know the number to beat")
-                PageSubline("Every lift opens with what beats last time.")
+                PageSubline("Each lift shows what beats last time.")
             case .grow:
                 PageHeadline("Watch yourself get stronger")
                 PageSubline("Proof you’re growing, week by week.")
@@ -111,11 +114,12 @@ struct OnboardingPageView: View {
 /// "Welcome to" over the Tracko wordmark, read as one heading.
 private struct WelcomeTitle: View {
     @ScaledMetric(relativeTo: .largeTitle) private var tracking = 52 * TypeScale.wordmarkTracking
+    @Environment(\.legibilityWeight) private var legibilityWeight
 
     var body: some View {
         VStack(spacing: 0) {
             Text("Welcome to")
-                .font(TypeScale.intro)
+                .font(TypeScale.intro(legibilityWeight))
                 .foregroundStyle(Theme.textPrimary)
             Text("Tracko")
                 .font(TypeScale.wordmark)

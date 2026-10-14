@@ -53,13 +53,14 @@ extension HeroStage where Screen == EmptyView {
 }
 
 /// Lays the screen out at a fixed design width, then scales it onto the render, so it looks the
-/// same on every phone.
+/// same on every phone. The design width is close to the drawn width (about 120 pt on a 6.3"
+/// phone), so text renders near its design size instead of shrinking to unreadable.
 private struct PhoneScreenLayer<Content: View>: View {
     let rect: PhoneScreenRect
     let size: CGSize
     let content: Content
 
-    static var designWidth: CGFloat { 150 }
+    static var designWidth: CGFloat { 140 }
 
     var body: some View {
         let width = rect.width * size.width
@@ -75,15 +76,16 @@ private struct PhoneScreenLayer<Content: View>: View {
 }
 
 /// The giant phone's screen: Tracko's dark UI with a soft brand glow at the top (as the
-/// reference's phone shows its own app), and the Dynamic Island. Laid out 150 pt wide.
+/// reference's phone shows its own app), and the Dynamic Island. Laid out 140 pt wide.
 struct PhoneScreen<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
         ZStack(alignment: .top) {
-            Theme.canvas
+            Theme.bgPage
+            // Labels near the top sit on this glow; they use textSecondary, which keeps APCA Lc 60+.
             Theme.glow(fadesOutAt: 0.42)
-                .opacity(0.9)
+                .opacity(0.7)
             content()
                 .padding(.horizontal, 12)
                 .padding(.top, 32)

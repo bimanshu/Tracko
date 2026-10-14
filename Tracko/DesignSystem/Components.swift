@@ -2,21 +2,24 @@ import SwiftUI
 
 // MARK: - Page chrome
 
-/// The near-black canvas with the brand glow falling from the top. The glow fades up once, when
-/// the screen first appears.
+/// The near-black page with the brand glow falling from the top, and a faint grain over both so
+/// the long, dark gradient never bands on screen. The glow fades up once, when the screen first
+/// appears (an opacity fade, so it suits Reduce Motion too).
 struct GlowBackground: View {
     @State private var isLit = false
 
     var body: some View {
         ZStack {
-            Theme.canvas
+            Theme.bgPage
             Theme.glow()
                 .opacity(isLit ? 1 : 0)
+            Image("grain")
+                .resizable(resizingMode: .tile)
         }
         .ignoresSafeArea()
+        .allowsHitTesting(false)
         .accessibilityHidden(true)
         .onAppear {
-            // An opacity fade only, so it suits Reduce Motion as well.
             withAnimation(.easeOut(duration: 1.2)) { isLit = true }
         }
     }
@@ -45,30 +48,43 @@ struct LogoMark: View {
 
 /// The one filled action on a screen: a light pill, like the reference's Start button.
 struct PrimaryButtonStyle: ButtonStyle {
+    /// A trailing icon sits optically further out, so that side gets 2 pt less padding.
+    var hasTrailingIcon = false
+    @Environment(\.legibilityWeight) private var legibilityWeight
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(TypeScale.button)
-            .foregroundStyle(Theme.canvas)
-            .padding(.horizontal, Space.xl)
+            .font(TypeScale.button(legibilityWeight))
+            .foregroundStyle(Theme.textInverse)
+            .padding(.leading, Space.xl)
+            .padding(.trailing, hasTrailingIcon ? Space.xl - 2 : Space.xl)
             .frame(minHeight: 48)
-            .background(Theme.textPrimary, in: Capsule())
+            .background(Theme.bgInverse, in: Capsule())
             .contentShape(Capsule())
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(Motion.snappy, value: configuration.isPressed)
+            .pressScale(configuration.isPressed)
     }
 }
 
 struct SecondaryButtonStyle: ButtonStyle {
+    @Environment(\.legibilityWeight) private var legibilityWeight
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(TypeScale.button)
+            .font(TypeScale.button(legibilityWeight))
             .foregroundStyle(Theme.textPrimary)
             .padding(.horizontal, Space.xl)
             .frame(minHeight: 48)
-            .background(Theme.surfaceRaised, in: Capsule())
+            .background(Theme.bgRaised, in: Capsule())
             .contentShape(Capsule())
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(Motion.snappy, value: configuration.isPressed)
+            .pressScale(configuration.isPressed)
+    }
+}
+
+private extension View {
+    /// Tactile press feedback: 0.96, eased out over 150 ms, interruptible.
+    func pressScale(_ isPressed: Bool) -> some View {
+        scaleEffect(isPressed ? 0.96 : 1)
+            .animation(Motion.press, value: isPressed)
     }
 }
 
@@ -101,7 +117,7 @@ struct PageDots: View {
         HStack(spacing: 8) {
             ForEach(0..<count, id: \.self) { index in
                 Capsule()
-                    .fill(index == current ? Theme.textPrimary : Theme.indicator)
+                    .fill(index == current ? Theme.textPrimary : Theme.fillSubtle)
                     .frame(width: index == current ? 18 : 7, height: 7)
             }
         }
@@ -121,27 +137,20 @@ struct PageDots: View {
 
 // MARK: - Words
 
-/// A page headline: Geist Bold, centred, slightly tightened, scaled with Dynamic Type.
+/// A page headline: Geist Bold at 1.1 line height, balanced over its lines.
 struct PageHeadline: View {
     let text: String
-    @ScaledMetric(relativeTo: .largeTitle) private var tracking = 34 * TypeScale.headlineTracking
 
     init(_ text: String) {
         self.text = text
     }
 
     var body: some View {
-        Text(text)
-            .font(TypeScale.headline)
-            .tracking(tracking)
-            .foregroundStyle(Theme.textPrimary)
-            .multilineTextAlignment(.center)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityAddTraits(.isHeader)
+        BalancedText(text: text, style: TypeScale.headline, isHeader: true)
     }
 }
 
-/// The line under a headline.
+/// The line under a headline, balanced so it never ends on one short word.
 struct PageSubline: View {
     let text: String
 
@@ -150,12 +159,51 @@ struct PageSubline: View {
     }
 
     var body: some View {
-        Text(text)
-            .font(TypeScale.body)
-            .lineSpacing(3)
-            .foregroundStyle(Theme.textSecondary)
-            .multilineTextAlignment(.center)
-            .fixedSize(horizontal: false, vertical: true)
+        BalancedText(text: text, style: TypeScale.body, color: Theme.textSecondary)
+    }
+}
+
+// MARK: - First-launch entrance
+
+private struct HasEnteredKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
+extension EnvironmentValues {
+    /// False until the onboarding first appears; parts with `.entrance(_:)` wait for it.
+    var hasEntered: Bool {
+        get { self[HasEnteredKey.self] }
+        set { self[HasEnteredKey.self] = newValue }
+    }
+}
+
+/// A staged entrance for the first launch: each part rises 12 pt out of a 4 pt blur, 100 ms after
+/// the one before, so the screen reads top to bottom. With Reduce Motion it only fades.
+private struct Entrance: ViewModifier {
+    let step: Int
+    @Environment(\.hasEntered) private var hasEntered
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        let isMoving = !hasEntered && !reduceMotion
+        content
+            .opacity(hasEntered ? 1 : 0)
+            .offset(y: isMoving ? 12 : 0)
+            .blur(radius: isMoving ? 4 : 0)
+            .animation(Motion.enter.delay(Double(step) * 0.1), value: hasEntered)
+    }
+}
+
+extension View {
+    func entrance(_ step: Int) -> some View {
+        modifier(Entrance(step: step))
+    }
+}
+
+extension String {
+    /// Keeps a short value such as "8 × 12, 11, 10" on one line.
+    var keptTogether: String {
+        replacingOccurrences(of: " ", with: "\u{00A0}")
     }
 }
 
@@ -163,10 +211,10 @@ struct PageSubline: View {
     VStack(spacing: Space.xl) {
         LogoMark()
         PageHeadline("Always know the number to beat")
-        PageSubline("Every lift opens with what beats last time.")
+        PageSubline("Each lift shows what beats last time.")
         PageDots(count: 4, current: 1) { _ in }
         Button {} label: { AdvanceLabel(title: "Continue") }
-            .buttonStyle(PrimaryButtonStyle())
+            .buttonStyle(PrimaryButtonStyle(hasTrailingIcon: true))
         Button("Replay onboarding") {}
             .buttonStyle(SecondaryButtonStyle())
     }

@@ -3,14 +3,37 @@ import SwiftUI
 // The live screens on the heroes' giant phone. Each plays one moment when its page is active,
 // says when it lands (`answered`, which swaps the character's face and plays a haptic), and
 // jumps straight to the end with Reduce Motion. Numbers come from DemoContent and LiftMath.
+// Laid out 140 pt wide (see PhoneScreenLayer); one idea per screen, with the number largest.
+// Labels in the top ~80 pt sit on the screen's glow, so they use textSecondary, not textTertiary.
 
 private enum PhoneText {
-    static let label = TypeScale.illustration(.semibold, 9)
+    static let label = TypeScale.illustration(.semibold, 10.5)
     static let title = TypeScale.illustration(.bold, 15)
     static let note = TypeScale.illustration(.regular, 14)
-    static let detail = TypeScale.illustration(.regular, 10.5)
-    static let figure = TypeScale.illustration(.extraBold, 24)
-    static let score = TypeScale.illustration(.extraBold, 42)
+    static let detail = TypeScale.illustration(.regular, 11.5)
+    static let tile = TypeScale.illustration(.bold, 14)
+    static let score = TypeScale.illustration(.extraBold, 40)
+}
+
+/// The verdict at the foot of a phone screen: the number first, then the plain reason (§8).
+private struct PhoneVerdict: View {
+    let percent: Int
+    let reason: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(LiftMath.formatPercent(percent))
+                .font(PhoneText.score)
+                .monospacedDigit()
+                .foregroundStyle(Theme.accent)
+                .contentTransition(.numericText(value: Double(percent)))
+            Text(reason)
+                .font(PhoneText.detail)
+                .lineSpacing(1.5)
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
 }
 
 // MARK: - Log it like a note
@@ -34,12 +57,13 @@ struct LogPhoneScreen: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Thursday")
                     .font(PhoneText.label)
-                    .foregroundStyle(Theme.textTertiary)
+                    .foregroundStyle(Theme.textSecondary)
                 Text(demo.exerciseName)
                     .font(PhoneText.title)
                     .foregroundStyle(Theme.textPrimary)
                     .padding(.top, 2)
 
+                // The note, typed in, with a caret while typing.
                 HStack(spacing: 1) {
                     Text(line.prefix(typed))
                         .font(PhoneText.note)
@@ -69,18 +93,8 @@ struct LogPhoneScreen: View {
 
                 Spacer(minLength: 8)
 
-                Group {
-                    Text(LiftMath.formatPercent(percent))
-                        .font(PhoneText.score)
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.accent)
-                        .contentTransition(.numericText(value: Double(percent)))
-                    Text(verdict.reason)
-                        .font(PhoneText.detail)
-                        .foregroundStyle(Theme.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .opacity(showsVerdict ? 1 : 0)
+                PhoneVerdict(percent: percent, reason: verdict.reason)
+                    .opacity(showsVerdict ? 1 : 0)
             }
         }
         .task(id: run) { await play() }
@@ -104,7 +118,7 @@ struct LogPhoneScreen: View {
             answered = true
             return
         }
-        guard await Script.wait(0.5) else { return }
+        guard await Script.wait(0.6) else { return }
         for count in 1...line.count {
             typed = count
             guard await Script.wait(0.07) else { return }
@@ -123,6 +137,8 @@ struct LogPhoneScreen: View {
 
 // MARK: - The number to beat
 
+/// Thursday's sets on one line, today's as tiles that fill set by set, and a bar of the total
+/// climbing to Thursday's mark. The last set beats it.
 struct BeatPhoneScreen: View {
     let demo: DemoContent
     let run: ScriptRun
@@ -137,7 +153,7 @@ struct BeatPhoneScreen: View {
     private var target: Double { demo.thursday.volume }
     private var volumeSoFar: Double { LiftMath.volume(Array(demo.today.sets.prefix(setsDone))) }
     private var beaten: Bool { volumeSoFar > target }
-    /// The bar's full width: a little past today's total, so the finish clears the line.
+    /// The bar's full width: a little past today's total, so the finish clears the mark.
     private var scaleMax: Double { demo.today.volume * 1.08 }
 
     var body: some View {
@@ -146,21 +162,24 @@ struct BeatPhoneScreen: View {
                 Text(demo.exerciseName)
                     .font(PhoneText.title)
                     .foregroundStyle(Theme.textPrimary)
-                Text("To beat Thursday")
-                    .font(PhoneText.label)
-                    .foregroundStyle(Theme.textTertiary)
-                    .padding(.top, 10)
-                Text(LiftMath.format(weight: target, unit: demo.unit))
-                    .font(PhoneText.figure)
-                    .monospacedDigit()
-                    .foregroundStyle(Theme.textPrimary)
+
+                HStack(spacing: 4) {
+                    Text("Thursday")
+                        .font(PhoneText.label)
+                        .foregroundStyle(Theme.textSecondary)
+                    Text(demo.thursdayReps.map(String.init).joined(separator: ", "))
+                        .font(PhoneText.detail)
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .padding(.top, 10)
 
                 HStack(spacing: 6) {
                     ForEach(Array(demo.todayReps.enumerated()), id: \.offset) { index, reps in
                         setTile(index: index, reps: reps)
                     }
                 }
-                .padding(.top, 12)
+                .padding(.top, 10)
 
                 progressBar
                     .padding(.top, 14)
@@ -170,21 +189,12 @@ struct BeatPhoneScreen: View {
                 ZStack(alignment: .bottomLeading) {
                     Text(needText)
                         .font(PhoneText.detail)
+                        .lineSpacing(1.5)
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .opacity(showsNeed && !showsVerdict ? 1 : 0)
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(LiftMath.formatPercent(percent))
-                            .font(PhoneText.score)
-                            .monospacedDigit()
-                            .foregroundStyle(Theme.accent)
-                            .contentTransition(.numericText(value: Double(percent)))
-                        Text(demo.todayVerdict.reason)
-                            .font(PhoneText.detail)
-                            .foregroundStyle(Theme.textSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .opacity(showsVerdict ? 1 : 0)
+                    PhoneVerdict(percent: percent, reason: demo.todayVerdict.reason)
+                        .opacity(showsVerdict ? 1 : 0)
                 }
             }
         }
@@ -201,15 +211,15 @@ struct BeatPhoneScreen: View {
     }
 
     private func setTile(index: Int, reps: Int) -> some View {
-        let done = index < setsDone
-        let isWinner = done && index == demo.todayReps.count - 1 && beaten
-        return Text(done ? "\(reps)" : "–")
-            .font(TypeScale.illustration(.bold, 14))
+        let isDone = index < setsDone
+        let isWinner = isDone && index == demo.todayReps.count - 1 && beaten
+        return Text(isDone ? "\(reps)" : "–")
+            .font(PhoneText.tile)
             .monospacedDigit()
-            .foregroundStyle(done ? (isWinner ? Theme.canvas : Theme.textPrimary) : Theme.textTertiary)
-            .frame(width: 34, height: 34)
+            .foregroundStyle(isWinner ? Theme.textInverse : (isDone ? Theme.textPrimary : Theme.textTertiary))
+            .frame(width: 32, height: 32)
             .background(
-                isWinner ? Theme.accent : Theme.surfaceRaised,
+                isWinner ? Theme.accent : Theme.bgRaised,
                 in: RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
             )
     }
@@ -221,21 +231,21 @@ struct BeatPhoneScreen: View {
             let marker = width * target / scaleMax
             ZStack(alignment: .topLeading) {
                 Capsule()
-                    .fill(Theme.surfaceRaised)
-                    .frame(height: 10)
+                    .fill(Theme.bgRaised)
+                    .frame(height: 8)
                 Capsule()
-                    .fill(beaten ? Theme.accent : Theme.textPrimary)
-                    .frame(width: width * min(volumeSoFar / scaleMax, 1), height: 10)
+                    .fill(beaten ? Theme.accent : Theme.fillStrong)
+                    .frame(width: width * min(volumeSoFar / scaleMax, 1), height: 8)
                 Capsule()
-                    .fill(Theme.textSecondary)
-                    .frame(width: 2, height: 16)
+                    .fill(Theme.fillStrong)
+                    .frame(width: 2, height: 14)
                     .offset(x: marker - 1, y: -3)
                 Text("Thursday")
                     .font(PhoneText.label)
                     .foregroundStyle(Theme.textTertiary)
                     .fixedSize()
                     .frame(width: marker, alignment: .trailing)
-                    .offset(y: 18)
+                    .offset(y: 16)
             }
         }
         .frame(height: 30)
@@ -259,7 +269,7 @@ struct BeatPhoneScreen: View {
             answered = true
             return
         }
-        guard await Script.wait(0.5) else { return }
+        guard await Script.wait(0.6) else { return }
         withAnimation(Motion.grow) { setsDone = 1 }
         guard await Script.wait(0.7) else { return }
         withAnimation(Motion.grow) { setsDone = 2 }
@@ -297,11 +307,11 @@ struct GrowPhoneScreen: View {
                     .foregroundStyle(Theme.textPrimary)
                 Text("Estimated max, \(demo.growthWeeks) weeks")
                     .font(PhoneText.label)
-                    .foregroundStyle(Theme.textTertiary)
+                    .foregroundStyle(Theme.textSecondary)
                     .padding(.top, 2)
 
                 GrowthChart(curve: demo.growthCurve, drawn: drawn)
-                    .frame(height: 96)
+                    .frame(height: 92)
                     .padding(.top, 16)
 
                 HStack {
@@ -315,18 +325,8 @@ struct GrowPhoneScreen: View {
 
                 Spacer(minLength: 8)
 
-                Group {
-                    Text(LiftMath.formatPercent(percent))
-                        .font(PhoneText.score)
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.accent)
-                        .contentTransition(.numericText(value: Double(percent)))
-                    Text("Your estimated max, up since week 1.")
-                        .font(PhoneText.detail)
-                        .foregroundStyle(Theme.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .opacity(showsScore ? 1 : 0)
+                PhoneVerdict(percent: percent, reason: "Stronger than in week 1.")
+                    .opacity(showsScore ? 1 : 0)
             }
         }
         .task(id: run) { await play() }
@@ -348,7 +348,7 @@ struct GrowPhoneScreen: View {
             answered = true
             return
         }
-        guard await Script.wait(0.4) else { return }
+        guard await Script.wait(0.5) else { return }
         withAnimation(.easeInOut(duration: 1.6)) { drawn = 1 }
         withAnimation(Motion.fade) { showsScore = true }
         let steps = max(demo.growthPercent, 1)
@@ -377,7 +377,7 @@ private struct GrowthChart: View {
                 area(points, height: proxy.size.height)
                     .fill(
                         LinearGradient(
-                            colors: [Theme.accent.opacity(0.32), Theme.accent.opacity(0)],
+                            colors: [Theme.accent.opacity(0.3), Theme.accent.opacity(0)],
                             startPoint: .top,
                             endPoint: .bottom
                         )

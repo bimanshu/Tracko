@@ -65,23 +65,42 @@ jobs:
           APP=build/Build/Products/Debug-iphonesimulator/Tracko.app
           BUNDLE=com.bimanshu.tracko
           mkdir -p screenshots
-          shoot() {
-            local udid=$1 tag=$2
-            [ -z "$udid" ] && return 0
+          prepare() {
+            local udid=$1
             xcrun simctl boot "$udid" 2>/dev/null || true
             xcrun simctl bootstatus "$udid" -b > /dev/null
             xcrun simctl ui "$udid" appearance dark
             xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 || true
             xcrun simctl install "$udid" "$APP"
+          }
+          shots() {
+            local udid=$1 tag=$2
             for scene in 0 1 2 3; do
               xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE" -TrackoStartScene "$scene" > /dev/null
               sleep 8
               xcrun simctl io "$udid" screenshot "screenshots/${tag}-scene-${scene}.png" > /dev/null 2>&1
             done
-            xcrun simctl shutdown "$udid" || true
           }
-          shoot "${{ steps.sims.outputs.main }}" main
-          shoot "${{ steps.sims.outputs.compact }}" compact
+          MAIN="${{ steps.sims.outputs.main }}"
+          COMPACT="${{ steps.sims.outputs.compact }}"
+          prepare "$MAIN"
+          shots "$MAIN" main
+          # Increase Contrast: muted text and dots should brighten.
+          if xcrun simctl ui "$MAIN" increase_contrast enabled; then
+            shots "$MAIN" main-contrast
+            xcrun simctl ui "$MAIN" increase_contrast disabled || true
+          fi
+          xcrun simctl shutdown "$MAIN" || true
+          if [ -n "$COMPACT" ]; then
+            prepare "$COMPACT"
+            shots "$COMPACT" compact
+            # The largest accessibility text size on the smallest phone: nothing may clip.
+            if xcrun simctl ui "$COMPACT" content_size accessibility-extra-extra-extra-large; then
+              shots "$COMPACT" compact-ax
+              xcrun simctl ui "$COMPACT" content_size large || true
+            fi
+            xcrun simctl shutdown "$COMPACT" || true
+          fi
           ls -la screenshots
 
       - name: Contact sheets
@@ -92,7 +111,8 @@ jobs:
           .venv/bin/python - <<'EOF'
           import glob
           from PIL import Image
-          for tag in ("main", "compact"):
+          tags = sorted({p.split("/")[-1].rsplit("-scene-", 1)[0] for p in glob.glob("screenshots/*-scene-*.png")})
+          for tag in tags:
               files = sorted(glob.glob(f"screenshots/{tag}-scene-*.png"),
                              key=lambda p: int(p.rsplit("-", 1)[1].split(".")[0]))
               if not files:

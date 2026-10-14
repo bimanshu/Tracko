@@ -3,46 +3,65 @@
 
   python3 design/tools/palette.py
 
-For every token: the Display P3 and sRGB values, whether it fits each gamut (iPhones show P3;
-anything outside sRGB needs P3 to look as intended), and WCAG contrast for every text pair
-the app uses. Keep TOKENS identical to `Theme` in Tracko/DesignSystem/Theme.swift.
+For every primitive: the Display P3 and sRGB values and whether it fits each gamut (iPhones show
+P3; anything outside sRGB needs P3 to look as intended). For every pair the app draws, in both
+the standard and the Increase Contrast appearance: WCAG 2 contrast (the legal bar) and APCA Lc
+(the perceptual one). Keep TOKENS and ROLES identical to Tracko/DesignSystem/Theme.swift.
 """
 import math
 
 # (L, C, h) — keep in sync with Theme.swift.
+# Primitives (Palette in Theme.swift): (L, C, h).
 TOKENS = {
-    # Neutrals, with a hint of the brand hue. The canvas is near-black, as in the reference
-    # (design/references/006), so the hero platform's dark side still reads against it.
-    "canvas":         (0.090, 0.004, 160),
-    "surface":        (0.170, 0.008, 160),
-    "surfaceRaised":  (0.225, 0.010, 160),
-    "border":         (0.290, 0.012, 160),
-    "indicator":      (0.480, 0.012, 160),
-    "textTertiary":   (0.640, 0.012, 160),
-    "textSecondary":  (0.800, 0.010, 160),
-    "textPrimary":    (0.975, 0.005, 160),
-    # Brand green: growth.
-    "accentMuted":    (0.330, 0.085, 152),
-    "glow":           (0.500, 0.170, 152),
-    "accent":         (0.850, 0.235, 152),
+    # Neutral ramp, with a hint of the brand hue. The page is near-black, as in the reference
+    # (design/references/006), so the hero platform's dark side still reads against it. Steps sit
+    # closer at the light end, where text lives. Lightness set so every pair passes APCA.
+    "neutral950": (0.090, 0.004, 160),
+    "neutral850": (0.225, 0.010, 160),
+    "neutral800": (0.290, 0.012, 160),
+    "neutral600": (0.570, 0.012, 160),
+    "neutral400": (0.770, 0.012, 160),
+    "neutral300": (0.850, 0.010, 160),
+    "neutral100": (0.920, 0.008, 160),
+    "neutral50":  (0.975, 0.005, 160),
+    # Green ramp: the brand, and growth.
+    "green600":   (0.500, 0.170, 152),
+    "green300":   (0.850, 0.235, 152),
 }
 
-# (foreground, background, required ratio): every text or graphic pair on screen.
+# Semantic roles (Theme in Theme.swift): role -> (standard primitive, Increase Contrast primitive).
+# Increase Contrast moves each muted role at least 15 points of lightness further from the page.
+ROLES = {
+    "bgPage": ("neutral950", "neutral950"),
+    "bgRaised": ("neutral850", "neutral850"),
+    "bgInverse": ("neutral50", "neutral50"),
+    "border": ("neutral800", "neutral600"),
+    "textPrimary": ("neutral50", "neutral50"),
+    "textSecondary": ("neutral300", "neutral50"),
+    "textTertiary": ("neutral400", "neutral100"),
+    "textInverse": ("neutral950", "neutral950"),
+    "fillSubtle": ("neutral600", "neutral400"),
+    "fillStrong": ("neutral300", "neutral50"),
+    "accent": ("green300", "green300"),
+    "glow": ("green600", "green600"),
+}
+
+# (foreground, background, kind) for every pair on screen. Kinds set the thresholds below.
 PAIRS = [
-    ("textPrimary", "canvas", 4.5),
-    ("textSecondary", "canvas", 4.5),
-    ("textTertiary", "canvas", 4.5),
-    ("textPrimary", "surface", 4.5),
-    ("textSecondary", "surface", 4.5),
-    ("textTertiary", "surface", 4.5),
-    ("canvas", "textPrimary", 4.5),      # label on the primary button
-    ("accent", "canvas", 3.0),           # large score numbers
-    ("accent", "surface", 3.0),
-    ("textPrimary", "glow", 3.0),        # the logo mark, at the brightest part of the glow
-    ("indicator", "canvas", 3.0),        # inactive page dots
-    ("textPrimary", "indicator", 3.0),   # active dot beside inactive ones
-    ("border", "canvas", 1.0),           # decorative divider, reported for reference
+    ("textPrimary", "bgPage", "body"),         # headlines, wordmark
+    ("textSecondary", "bgPage", "body"),       # sublines
+    ("textTertiary", "bgPage", "label"),       # phone screen labels (the screen is bgPage)
+    ("textInverse", "bgInverse", "label"),     # the button label
+    ("textInverse", "accent", "label"),        # a beaten set's tile
+    ("textPrimary", "bgRaised", "label"),      # set tiles
+    ("accent", "bgPage", "large"),             # the +% score
+    ("textPrimary", "glow", "large"),          # the logo, at the brightest part of the glow
+    ("fillSubtle", "bgPage", "ui"),            # inactive page dots
+    ("fillStrong", "bgRaised", "ui"),          # a progress bar on its track
+    ("accent", "bgRaised", "ui"),              # a beaten bar on its track
 ]
+# kind -> (WCAG 2 minimum, APCA |Lc| minimum)
+THRESHOLDS = {"body": (4.5, 75), "label": (4.5, 60), "large": (3.0, 45), "ui": (3.0, 30)}
 
 
 def oklab_to_linear_srgb(L, a, b):
@@ -92,26 +111,49 @@ def contrast(a, b):
     return (ya + 0.05) / (yb + 0.05)
 
 
+def apca(text_lin, bg_lin):
+    """APCA-W3 0.0.98G-4g lightness contrast, Lc. Negative means light text on a dark background.
+    Uses the sRGB-encoded values (clipped), as the APCA reference does."""
+    def y(lin):
+        encoded = [min(max(encode(c), 0), 1) for c in lin]
+        value = sum(k * c ** 2.4 for k, c in zip((0.2126729, 0.7151522, 0.0721750), encoded))
+        return value if value > 0.022 else value + (0.022 - value) ** 1.414
+    yt, yb = y(text_lin), y(bg_lin)
+    if abs(yb - yt) < 0.0005:
+        return 0.0
+    if yb > yt:
+        sapc = (yb ** 0.56 - yt ** 0.57) * 1.14
+        return 0.0 if sapc < 0.1 else (sapc - 0.027) * 100
+    sapc = (yb ** 0.65 - yt ** 0.62) * 1.14
+    return 0.0 if sapc > -0.1 else (sapc + 0.027) * 100
+
+
 def hex_of(rgb):
     return "#" + "".join(f"{round(min(max(encode(c), 0), 1) * 255):02X}" for c in rgb)
 
 
 def main():
     linear = {name: oklch_to_linear_srgb(*lch) for name, lch in TOKENS.items()}
-    print(f"{'token':15} {'oklch':24} {'P3 (r, g, b)':26} {'in P3':6} {'in sRGB':8} sRGB hex")
+    print(f"{'primitive':12} {'oklch':24} {'P3 (r, g, b)':22} {'in P3':6} {'in sRGB':8} sRGB hex")
     for name, lch in TOKENS.items():
         srgb = linear[name]
         p3 = linear_srgb_to_linear_p3(srgb)
         p3_encoded = ", ".join(f"{encode(c):.3f}" for c in p3)
-        print(f"{name:15} oklch({lch[0]:.3f} {lch[1]:.3f} {lch[2]:>3}) {p3_encoded:26} {'yes' if in_gamut(p3) else 'NO':6} "
+        print(f"{name:12} oklch({lch[0]:.3f} {lch[1]:.3f} {lch[2]:>3}) {p3_encoded:22} {'yes' if in_gamut(p3) else 'NO':6} "
               f"{'yes' if in_gamut(srgb) else 'no':8} {hex_of(srgb)}")
-    print()
-    print(f"{'pair':34} {'ratio':>6}  needs")
-    for fg, bg, need in PAIRS:
-        ratio = contrast(linear[fg], linear[bg])
-        verdict = "ok" if ratio >= need else "FAIL"
-        print(f"{fg + ' on ' + bg:34} {ratio:6.2f}  {need:>4}  {verdict}")
+    failures = 0
+    for appearance, index in (("standard", 0), ("Increase Contrast", 1)):
+        print(f"\n{appearance}")
+        print(f"{'pair':30} {'kind':6} {'WCAG':>6} {'APCA Lc':>8}  result")
+        for fg, bg, kind in PAIRS:
+            f, b = linear[ROLES[fg][index]], linear[ROLES[bg][index]]
+            ratio, lc = contrast(f, b), apca(f, b)
+            wcag_min, apca_min = THRESHOLDS[kind]
+            ok = ratio >= wcag_min and abs(lc) >= apca_min
+            failures += not ok
+            print(f"{fg + ' on ' + bg:30} {kind:6} {ratio:6.2f} {lc:8.1f}  {'ok' if ok else 'FAIL'}")
+    return failures
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
