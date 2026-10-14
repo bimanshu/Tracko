@@ -4,32 +4,23 @@ import SwiftUI
 struct HomePlaceholderView: View {
     var replayOnboarding: () -> Void
 
-    @AppStorage(StorageKey.goal) private var savedGoal = ""
-    @AppStorage(StorageKey.name) private var savedName = ""
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.l) {
+        VStack(spacing: Space.l) {
             Spacer()
-            SceneHeadline(savedName.isEmpty ? "You're set." : "You're set, \(savedName).")
-            Text("Logging, the number to beat and your first growth report come next.")
-                .font(.body)
-                .foregroundStyle(Theme.chalkMuted)
-            if let goal = Goal(rawValue: savedGoal) {
-                Text("Goal: \(goal.title)")
-                    .font(.headline)
-                    .foregroundStyle(Theme.chalk)
-            }
+            PageHeadline("You’re set")
+            PageSubline("Logging, the number to beat and your first growth report come next.")
             Spacer()
             Button("Replay onboarding", action: replayOnboarding)
                 .buttonStyle(SecondaryButtonStyle())
+                .padding(.bottom, Space.l)
         }
         .padding(.horizontal, Space.gutter)
-        .padding(.bottom, Space.s)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.ink.ignoresSafeArea())
+        .frame(maxWidth: .infinity)
+        .background { GlowBackground() }
     }
 }
 
 #Preview {
     HomePlaceholderView {}
+        .onAppear { Fonts.register() }
 }

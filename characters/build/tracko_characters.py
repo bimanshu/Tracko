@@ -11,6 +11,10 @@ Modes:
   anim   the "gym log" clip (walk in, lateral raises, log it on the phone, celebrate), PNG frames
          with a transparent background. The +% pop-up is not rendered; it's drawn by the app at
          the frame in TIMING["popup"], so the number always matches the maths.
+  hero   an onboarding diorama: --scene welcome|log|beat|grow, --variant a|b (the same shot with
+         the second expression), on a round platform beside a giant phone. Writes the PNG and,
+         with --rect-out, where the phone's screen lands in the image, so the app can draw a live
+         screen on it.
 
 Everything is made of rounded clay shapes on a shared skeleton of pivots. Character differences
 live only in SPECS (colours, hair, build), never in the animation.
@@ -45,41 +49,53 @@ TIMING = {
 # Specs: the only place the two characters differ
 # ---------------------------------------------------------------------------
 
+# Brand green, as close to the app's accent (oklch 0.85 0.235 150) as an sRGB texture gets.
+BRAND = "17C964"
+
 COMMON = {
-    "eye": "141217",
+    "eye": "15131A",
+    "sclera": "FBFAF7",
     "mouth": "5A2E2E",
     "mouth_open": "5B1E2B",
     "tongue": "E8707A",
     "blush": "F49AA6",
-    "sneaker": "F3F1EC",
-    "sole": "D6D8DE",
-    "dumbbell": "3A3F4A",
-    "phone": "22252C",
-    "screen": "FFF6D6",
+    "sneaker": "F4F3EF",
+    "sole": "F4F3EF",
+    "sock": "F4F3EF",
+    "dumbbell": "2A2D33",
+    "phone": "15171D",
+    "screen": "060807",
+    "plinth": "1E1F25",
+    "prop_dark": "26292E",
+    "bottle": "EDEDEA",
 }
 
+# Colour blocking like a vinyl toy: white, black and one brand colour. The two characters mirror
+# each other (white top and black bottom, or the reverse), so they read as a pair.
 SPECS = {
     "female": {
         "skin": "F6C9A8",
         "skin_shade": "EDB592",
-        "hair": "3B2D40",
-        "top": "C6B3F2",
-        "bottom": "3E3A6E",
-        "accent": "9F86E0",
+        "hair": "2A2130",
+        "top": "F3F2EE",
+        "bottom": "1D1E23",
+        "accent": BRAND,
         "torso_width": 0.112,
         "hair_style": "bun",
         "shorts": False,
+        "cap": None,
     },
     "male": {
         "skin": "C48A62",
         "skin_shade": "B37850",
-        "hair": "3A2A22",
-        "top": "8CCBB8",
-        "bottom": "343A46",
-        "accent": "5FAE98",
+        "hair": "2A1F1A",
+        "top": "1D1E23",
+        "bottom": "F0EEE8",
+        "accent": BRAND,
         "torso_width": 0.124,
         "hair_style": "quiff",
         "shorts": True,
+        "cap": "F3F2EE",
     },
 }
 
@@ -100,7 +116,8 @@ def colour(hex_value):
 _materials = {}
 
 
-def material(name, hex_value, roughness=0.5, coat=0.08, emission=0.0, sheen=0.25):
+def material(name, hex_value, roughness=0.5, coat=0.08, emission=0.0, sheen=0.25, coat_roughness=0.18, metallic=0.0,
+             specular=0.5):
     key = (name, hex_value)
     if key in _materials:
         return _materials[key]
@@ -110,7 +127,10 @@ def material(name, hex_value, roughness=0.5, coat=0.08, emission=0.0, sheen=0.25
     bsdf.inputs["Base Color"].default_value = colour(hex_value)
     bsdf.inputs["Roughness"].default_value = roughness
     bsdf.inputs["Coat Weight"].default_value = coat
+    bsdf.inputs["Coat Roughness"].default_value = coat_roughness
     bsdf.inputs["Sheen Weight"].default_value = sheen
+    bsdf.inputs["Metallic"].default_value = metallic
+    bsdf.inputs["Specular IOR Level"].default_value = specular
     if emission:
         bsdf.inputs["Emission Color"].default_value = colour(hex_value)
         bsdf.inputs["Emission Strength"].default_value = emission
@@ -196,6 +216,103 @@ def rounded_box(name, size, parent, location, mat, bevel=0.012):
     return obj
 
 
+def dome(name, semi, parent, location, mat, rotation=(0, 0, 0), segments=64):
+    """The top half of an ellipsoid: a cap crown."""
+    mesh = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=segments, v_segments=segments // 2, radius=1.0)
+    bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, 0),
+                           plane_no=(0, 0, 1), clear_inner=True)
+    for v in bm.verts:
+        v.co = Vector((v.co.x * semi[0], v.co.y * semi[1], v.co.z * semi[2]))
+    bm.to_mesh(mesh)
+    bm.free()
+    for poly in mesh.polygons:
+        poly.use_smooth = True
+    obj = link(bpy.data.objects.new(name, mesh))
+    obj.parent = parent
+    obj.location = location
+    obj.rotation_mode = "XYZ"
+    obj.rotation_euler = [math.radians(a) for a in rotation]
+    solid = obj.modifiers.new("Solidify", "SOLIDIFY")
+    solid.thickness = 0.01
+    obj.data.materials.append(mat)
+    return obj
+
+
+def slab(name, size, corner, edge, parent, location, mat):
+    """A box with rounded corners seen from the front (XZ) and softly rounded edges: phones."""
+    mesh = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=1.0)
+    for v in bm.verts:
+        v.co = Vector((v.co.x * size[0], v.co.y * size[1], v.co.z * size[2]))
+    depth_edges = [e for e in bm.edges
+                   if abs(e.verts[0].co.x - e.verts[1].co.x) < 1e-6 and abs(e.verts[0].co.z - e.verts[1].co.z) < 1e-6]
+    bmesh.ops.bevel(bm, geom=depth_edges, offset=corner, segments=16, profile=0.5, affect="EDGES", clamp_overlap=True)
+    bm.to_mesh(mesh)
+    bm.free()
+    obj = link(bpy.data.objects.new(name, mesh))
+    obj.parent = parent
+    obj.location = location
+    obj.rotation_mode = "XYZ"
+    if edge:
+        mod = obj.modifiers.new("Bevel", "BEVEL")
+        mod.width = edge
+        mod.segments = 5
+        mod.limit_method = "ANGLE"
+        mod.angle_limit = math.radians(40)
+    for poly in mesh.polygons:
+        poly.use_smooth = True
+    try:
+        mesh.set_sharp_from_angle(angle=math.radians(35))
+    except AttributeError:
+        pass
+    obj.data.materials.append(mat)
+    return obj
+
+
+def cylinder(name, radius, depth, parent, location, mat, rotation=(0, 0, 0), bevel=0.0, segments=96):
+    mesh = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, segments=segments, radius1=radius, radius2=radius, depth=depth)
+    bm.to_mesh(mesh)
+    bm.free()
+    obj = link(bpy.data.objects.new(name, mesh))
+    obj.parent = parent
+    obj.location = location
+    obj.rotation_mode = "XYZ"
+    obj.rotation_euler = [math.radians(a) for a in rotation]
+    if bevel:
+        mod = obj.modifiers.new("Bevel", "BEVEL")
+        mod.width = bevel
+        mod.segments = 5
+        mod.limit_method = "ANGLE"
+    for poly in mesh.polygons:
+        poly.use_smooth = True
+    try:
+        mesh.set_sharp_from_angle(angle=math.radians(40))
+    except AttributeError:
+        pass
+    obj.data.materials.append(mat)
+    return obj
+
+
+def torus(name, major, minor, parent, location, mat, rotation=(0, 0, 0), scale=(1, 1, 1)):
+    bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor, major_segments=64, minor_segments=24)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.parent = parent
+    obj.location = location
+    obj.rotation_mode = "XYZ"
+    obj.rotation_euler = [math.radians(a) for a in rotation]
+    obj.scale = scale
+    for poly in obj.data.polygons:
+        poly.use_smooth = True
+    obj.data.materials.append(mat)
+    return obj
+
+
 # ---------------------------------------------------------------------------
 # The character
 # ---------------------------------------------------------------------------
@@ -208,22 +325,26 @@ class Rig:
 def build_character(kind):
     spec = SPECS[kind]
     c = COMMON
+    # Glossy vinyl: a smooth base under a clear coat, like a collectible toy.
     m = {
-        "skin": material("skin", spec["skin"], roughness=0.55, coat=0.05, sheen=0.35),
-        "skin_shade": material("skin_shade", spec["skin_shade"], roughness=0.55, coat=0.05, sheen=0.35),
-        "hair": material("hair", spec["hair"], roughness=0.45, coat=0.15),
-        "top": material("top", spec["top"], roughness=0.65, coat=0.0, sheen=0.5),
-        "bottom": material("bottom", spec["bottom"], roughness=0.6, coat=0.0, sheen=0.4),
-        "accent": material("accent", spec["accent"], roughness=0.5),
+        "skin": material("skin", spec["skin"], roughness=0.42, coat=0.3, sheen=0.2),
+        "skin_shade": material("skin_shade", spec["skin_shade"], roughness=0.42, coat=0.3, sheen=0.2),
+        "hair": material("hair", spec["hair"], roughness=0.3, coat=0.6, sheen=0.0, coat_roughness=0.12),
+        "top": material("top", spec["top"], roughness=0.5, coat=0.18, sheen=0.3),
+        "bottom": material("bottom", spec["bottom"], roughness=0.48, coat=0.2, sheen=0.25),
+        "accent": material("accent", spec["accent"], roughness=0.35, coat=0.4, sheen=0.0),
         "eye": material("eye", c["eye"], roughness=0.12, coat=1.0, sheen=0.0),
+        "sclera": material("sclera", c["sclera"], roughness=0.25, coat=0.8, sheen=0.0),
+        "sock": material("sock", c["sock"], roughness=0.6, coat=0.0, sheen=0.4),
+        "cap": material("cap", spec["cap"] or c["sock"], roughness=0.45, coat=0.25, sheen=0.2),
         "sparkle": material("sparkle", "FFFFFF", roughness=0.3, emission=4.0, sheen=0.0),
         "mouth": material("mouth", c["mouth"], roughness=0.5),
         "mouth_open": material("mouth_open", c["mouth_open"], roughness=0.5),
         "tongue": material("tongue", c["tongue"], roughness=0.5),
         "blush": material("blush", c["blush"], roughness=0.7, sheen=0.4),
-        "sneaker": material("sneaker", c["sneaker"], roughness=0.5),
-        "sole": material("sole", c["sole"], roughness=0.6),
-        "dumbbell": material("dumbbell", c["dumbbell"], roughness=0.35, coat=0.3, sheen=0.0),
+        "sneaker": material("sneaker", c["sneaker"], roughness=0.38, coat=0.35, sheen=0.0),
+        "sole": material("sole", c["sole"], roughness=0.55, coat=0.0, sheen=0.0),
+        "dumbbell": material("dumbbell", c["dumbbell"], roughness=0.3, coat=0.5, sheen=0.0),
         "phone": material("phone", c["phone"], roughness=0.3, coat=0.5, sheen=0.0),
         "screen": material("screen", c["screen"], roughness=0.3, emission=2.5, sheen=0.0),
     }
@@ -243,15 +364,20 @@ def build_character(kind):
         limb(f"leg_{side}", (0.047, 0.05, 0.115), hip, 0.105, leg_mat)
         if spec["shorts"]:
             ellipsoid(f"short_leg_{side}", (0.06, 0.062, 0.065), hip, (0, 0, -0.035), m["bottom"])
-        ellipsoid(f"shoe_{side}", (0.052, 0.078, 0.038), hip, (0, -0.018, -0.205), m["sneaker"])
-        ellipsoid(f"sole_{side}", (0.055, 0.081, 0.014), hip, (0, -0.018, -0.232), m["sole"])
-        ellipsoid(f"shoe_stripe_{side}", (0.054, 0.04, 0.012), hip, (side * 0.004, -0.005, -0.198), m["accent"])
+        if spec["shorts"]:
+            ellipsoid(f"sock_{side}", (0.045, 0.047, 0.03), hip, (0, -0.004, -0.168), m["sock"])
+        # Chunky sneaker: a rounded upper on a thick sole with a brand-green midsole line.
+        ellipsoid(f"shoe_{side}", (0.056, 0.086, 0.044), hip, (0, -0.02, -0.198), m["sneaker"])
+        ellipsoid(f"sole_{side}", (0.06, 0.091, 0.02), hip, (0, -0.02, -0.226), m["sole"])
+        ellipsoid(f"midsole_{side}", (0.0605, 0.0915, 0.0065), hip, (0, -0.02, -0.219), m["accent"])
+        ellipsoid(f"shoe_stripe_{side}", (0.058, 0.036, 0.012), hip, (side * 0.002, -0.004, -0.19), m["accent"], rotation=(0, 0, 0))
         r.legs.append(hip)
 
     # Torso and hips.
     pelvis_semi = (tw - 0.004, 0.084, 0.072) if spec["shorts"] else (tw - 0.01, 0.08, 0.062)
     ellipsoid("pelvis", pelvis_semi, r.body, (0, 0, 0.02), m["bottom"])
     ellipsoid("torso", (tw + 0.006, 0.094, 0.135), r.body, (0, 0, 0.13), m["top"])
+    ellipsoid("badge", (0.021, 0.006, 0.021), r.body, (0.046, -0.083, 0.172), m["accent"], rotation=(-12, 0, 18), segments=32)
 
     # Arms swing from the shoulders.
     r.arms = []
@@ -261,6 +387,7 @@ def build_character(kind):
         ellipsoid(f"sleeve_{side}", (0.056, 0.058, 0.055), shoulder, (0, 0, -0.025), m["top"])
         limb(f"arm_{side}", (0.042, 0.044, 0.115), shoulder, 0.105, m["skin"])
         ellipsoid(f"hand_{side}", (0.05, 0.05, 0.05), shoulder, (0, 0, -0.215), m["skin"])
+        ellipsoid(f"thumb_{side}", (0.017, 0.019, 0.027), shoulder, (-side * 0.03, -0.03, -0.198), m["skin"], rotation=(18, side * 20, 0))
         hand = empty(f"grip_{side}", shoulder, (0, 0, -0.225))
         r.arms.append(shoulder)
         r.hands.append(hand)
@@ -275,9 +402,11 @@ def build_character(kind):
     # Face parts, each swappable for expressions.
     r.eyes, r.sparkles, r.brows, r.happy_eyes, r.effort_eyes, r.blush = [], [], [], [], [], []
     for side in (-1, 1):
-        eye_pivot = empty(f"eye_{side}", r.head, (side * 0.072, -0.188, 0.205))
-        ellipsoid(f"pupil_{side}", (0.03, 0.014, 0.038), eye_pivot, (0, 0, 0), m["eye"])
-        ellipsoid(f"sparkle_{side}", (0.009, 0.006, 0.009), eye_pivot, (-0.009, -0.012, 0.016), m["sparkle"], segments=16)
+        eye_pivot = empty(f"eye_{side}", r.head, (side * 0.076, -0.186, 0.2))
+        ellipsoid(f"sclera_{side}", (0.041, 0.012, 0.049), eye_pivot, (0, 0.002, 0), m["sclera"], segments=32)
+        ellipsoid(f"pupil_{side}", (0.033, 0.0155, 0.04), eye_pivot, (side * -0.002, -0.002, -0.004), m["eye"])
+        ellipsoid(f"sparkle_{side}", (0.0115, 0.006, 0.0115), eye_pivot, (-0.011, -0.016, 0.014), m["sparkle"], segments=16)
+        ellipsoid(f"sparkle_small_{side}", (0.0055, 0.004, 0.0055), eye_pivot, (0.011, -0.0165, -0.017), m["sparkle"], segments=12)
         r.eyes.append(eye_pivot)
         happy = empty(f"happy_eye_{side}", r.head, (side * 0.072, -0.19, 0.2))
         arc(f"happy_arc_{side}", [(-0.026, 0, -0.008), (0, -0.006, 0.016), (0.026, 0, -0.008)], happy, m["eye"], 0.0075)
@@ -311,15 +440,25 @@ def build_character(kind):
         ellipsoid("hair_tie", (0.062, 0.06, 0.018), r.head, (0, 0.055, 0.36), m["accent"])
     else:
         ellipsoid("hair_cap", (0.228, 0.217, 0.19), r.head, (0, 0.035, 0.245), m["hair"], segments=64)
-        # A quiff that sweeps up and over to one side.
-        for x, y, z, semi, rot in (
-            (0.0, -0.12, 0.395, (0.115, 0.072, 0.056), (-22, 0, -8)),
-            (0.095, -0.08, 0.38, (0.08, 0.062, 0.05), (-15, -20, 0)),
-            (-0.1, -0.085, 0.372, (0.062, 0.052, 0.042), (-15, 18, 0)),
-        ):
-            ellipsoid("tuft", semi, r.head, (x, y, z), m["hair"], rotation=rot)
+        if not spec["cap"]:
+            # A quiff that sweeps up and over to one side.
+            for x, y, z, semi, rot in (
+                (0.0, -0.12, 0.395, (0.115, 0.072, 0.056), (-22, 0, -8)),
+                (0.095, -0.08, 0.38, (0.08, 0.062, 0.05), (-15, -20, 0)),
+                (-0.1, -0.085, 0.372, (0.062, 0.052, 0.042), (-15, 18, 0)),
+            ):
+                ellipsoid("tuft", semi, r.head, (x, y, z), m["hair"], rotation=rot)
         for side in (-1, 1):
             ellipsoid(f"sideburn_{side}", (0.02, 0.03, 0.05), r.head, (side * 0.198, -0.045, 0.205), m["hair"])
+
+    if spec["cap"]:
+        # A baseball cap, tipped back a little, with a brand-green badge on the front.
+        cap = empty("cap", r.head, (0, 0.0, 0.272))
+        cap.rotation_euler = (math.radians(-9), 0, 0)
+        dome("crown", (0.238, 0.236, 0.205), cap, (0, 0.008, 0), m["cap"])
+        ellipsoid("brim", (0.158, 0.128, 0.013), cap, (0, -0.225, 0.004), m["cap"], rotation=(6, 0, 0))
+        ellipsoid("button", (0.022, 0.022, 0.012), cap, (0, 0.008, 0.204), m["cap"], segments=24)
+        ellipsoid("cap_badge", (0.052, 0.01, 0.046), cap, (0, -0.212, 0.098), m["accent"], rotation=(-28, 0, 0), segments=32)
 
     # Props, hidden until used.
     r.dumbbells = []
@@ -599,7 +738,19 @@ def animate_gym_log(r):
 # ---------------------------------------------------------------------------
 
 
-def setup_scene(resolution, samples):
+def area(name, location, energy, size, hex_value="FFFFFF", shadows=True, target=(0, 0, 0.5)):
+    light = bpy.data.lights.new(name, "AREA")
+    light.energy = energy
+    light.size = size
+    light.use_shadow = shadows
+    light.color = colour(hex_value)[:3]
+    obj = link(bpy.data.objects.new(name, light))
+    obj.location = location
+    obj.rotation_euler = (Vector(target) - Vector(location)).to_track_quat("-Z", "Y").to_euler()
+    return obj
+
+
+def setup_scene(resolution, samples, lighting="studio", height=None):
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
@@ -615,7 +766,7 @@ def setup_scene(resolution, samples):
     scene.cycles.caustics_refractive = False
     scene.render.film_transparent = True
     scene.render.resolution_x = resolution
-    scene.render.resolution_y = resolution
+    scene.render.resolution_y = height or resolution
     scene.render.fps = FPS
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGBA"
@@ -631,17 +782,9 @@ def setup_scene(resolution, samples):
     world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.55
     scene.world = world
 
-    def area(name, location, energy, size, hex_value="FFFFFF", shadows=True):
-        light = bpy.data.lights.new(name, "AREA")
-        light.energy = energy
-        light.size = size
-        light.use_shadow = shadows
-        light.color = colour(hex_value)[:3]
-        obj = link(bpy.data.objects.new(name, light))
-        obj.location = location
-        target = Vector((0, 0, 0.5))
-        obj.rotation_euler = (target - Vector(location)).to_track_quat("-Z", "Y").to_euler()
-        return obj
+    if lighting == "hero":
+        setup_hero_lights(world)
+        return
 
     area("key", (-2.2, -2.8, 3.2), 420, 3.0, "FFF4E8")
     area("fill", (2.8, -2.4, 1.4), 140, 3.0, "E8F0FF")
@@ -674,6 +817,271 @@ def setup_camera(shot):
 
 
 # ---------------------------------------------------------------------------
+# Onboarding heroes: a diorama on a round platform, like a collectible on its stand
+# ---------------------------------------------------------------------------
+
+# Measured from the Any Distance onboarding (design/references/006, screens 04–06), the owner's
+# reference for these heroes: the platform spans 82% of the screen width, the phone 32%, centred,
+# about twice as tall as it is wide, and the camera looks down only ~5°.
+HERO = {
+    "size": (1200, 924),        # px; full screen width in the app, @3x on a 400 pt wide phone
+    "plinth_radius": 1.18,
+    "plinth_height": 0.088,
+    "plinth_fraction": 0.818,   # platform width ÷ image width
+    "pitch": 4.6,               # degrees the camera looks down
+    "lens": 85,
+    "bottom_margin": 0.035,     # gap under the platform, as a share of the image height
+}
+HERO_SIZE = HERO["size"]
+PHONE = {"width": 0.924, "depth": 0.075, "height": 1.83, "corner": 0.152, "bezel": 0.041, "y": 0.02}
+
+
+def setup_hero_lights(world):
+    """Dark and moody, like the reference: a warm key, a brand-green glow from above and behind
+    (it echoes the glow the app draws at the top of the screen) and cool rims."""
+    world.node_tree.nodes["Background"].inputs["Color"].default_value = colour("5A6068")
+    world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.1
+    area("key", (-2.6, -3.1, 3.3), 600, 2.4, "FFF1E2", target=(0, 0, 0.55))
+    area("fill", (2.8, -2.8, 0.9), 130, 3.0, "E6EEFF", target=(0, 0, 0.55))
+    area("warm_side", (3.2, 0.6, 1.2), 260, 2.0, "FFC9A0", shadows=False, target=(0, 0, 0.3))
+    area("glow", (0.0, 3.3, 2.6), 560, 3.0, BRAND, shadows=False, target=(0, 0, 0.95))
+    area("rim", (2.7, 1.9, 1.7), 320, 1.6, "EAF2FF", shadows=False, target=(0, 0, 0.6))
+    area("rim_left", (-2.6, 1.7, 1.5), 220, 1.6, "F2FFF6", shadows=False, target=(0, 0, 0.6))
+
+
+def keep_light_off(light_name, obj):
+    """Light linking: everything but `obj` receives this light."""
+    light = bpy.data.objects[light_name]
+    collection = bpy.data.collections.new(light_name + "_receivers")
+    collection.objects.link(obj)
+    light.light_linking.receiver_collection = collection
+    # Entries follow collection.objects, which holds only `obj`.
+    collection.collection_objects[0].light_linking.link_state = "EXCLUDE"
+
+
+def build_plinth():
+    # Fully matte: seen this close to edge-on, any specular turns the top into a mirror.
+    mat = material("plinth", COMMON["plinth"], roughness=0.9, coat=0.0, sheen=0.0, specular=0.0)
+    h = HERO["plinth_height"]
+    plinth = cylinder("plinth", HERO["plinth_radius"], h, None, (0, 0, -h / 2), mat, bevel=0.012, segments=192)
+    keep_light_off("glow", plinth)
+    return plinth
+
+
+def build_phone(location, camera_location):
+    """A giant phone standing on the platform, tipped back so its screen faces the camera.
+    Returns the screen, whose corners give the rectangle the app draws on."""
+    w, d, h = PHONE["width"], PHONE["depth"], PHONE["height"]
+    pivot = empty("giant_phone", None, location)
+    to_camera = Vector(camera_location) - (Vector(location) + Vector((0, 0, h / 2)))
+    pivot.rotation_euler = (-math.atan2(to_camera.z, -to_camera.y), 0, 0)
+    # Matte dark grey, like the reference: the frame reads as a soft outline, not a chrome rim.
+    frame = material("phone_frame", COMMON["phone"], roughness=0.55, coat=0.0, sheen=0.0, metallic=0.0, specular=0.22)
+    glass = material("phone_glass", COMMON["screen"], roughness=0.06, coat=1.0, sheen=0.0)
+    slab("phone_body", (w, d, h), PHONE["corner"], 0.014, pivot, (0, 0, h / 2), frame)
+    b = PHONE["bezel"]
+    screen = slab("phone_screen", (w - 2 * b, 0.004, h - 2 * b), PHONE["corner"] - b, 0.0, pivot,
+                  (0, -d / 2 - 0.0016, h / 2), glass)
+    # Side buttons catch the rim light.
+    for z, length in ((1.25, 0.18), (1.48, 0.11)):
+        slab("phone_button", (0.014, 0.036, length), 0.006, 0.0, pivot, (-w / 2 - 0.005, 0, z), frame)
+    return screen
+
+
+def kettlebell(location, turn=0.0):
+    mat = material("prop_dark", COMMON["prop_dark"], roughness=0.3, coat=0.5, sheen=0.0)
+    p = empty("kettlebell", None, location)
+    p.rotation_euler = (0, 0, math.radians(turn))
+    ellipsoid("kb_body", (0.13, 0.13, 0.12), p, (0, 0, 0.12), mat)
+    ellipsoid("kb_base", (0.085, 0.085, 0.014), p, (0, 0, 0.008), mat, segments=32)
+    torus("kb_handle", 0.08, 0.022, p, (0, 0, 0.232), mat, rotation=(90, 0, 0))
+    return p
+
+
+def bumper_plate(location, tilt=(0, 0, 0)):
+    disc = material("plate", BRAND, roughness=0.42, coat=0.25, sheen=0.0)
+    hub = material("plate_hub", "C9CCD0", roughness=0.22, coat=0.0, sheen=0.0, metallic=0.85)
+    p = empty("plate", None, location)
+    p.rotation_euler = [math.radians(a) for a in tilt]
+    cylinder("plate_disc", 0.22, 0.06, p, (0, 0, 0), disc, rotation=(90, 0, 0), bevel=0.014)
+    cylinder("plate_hub", 0.055, 0.072, p, (0, 0, 0), hub, rotation=(90, 0, 0), bevel=0.006, segments=48)
+    return p
+
+
+def water_bottle(location):
+    body = material("bottle", COMMON["bottle"], roughness=0.28, coat=0.6, sheen=0.0)
+    cap = material("prop_accent", BRAND, roughness=0.32, coat=0.4, sheen=0.0)
+    p = empty("bottle", None, location)
+    cylinder("bottle_body", 0.062, 0.27, p, (0, 0, 0.135), body, bevel=0.022, segments=64)
+    cylinder("bottle_cap", 0.046, 0.055, p, (0, 0, 0.297), cap, bevel=0.012, segments=48)
+    ellipsoid("bottle_spout", (0.018, 0.018, 0.024), p, (0, 0, 0.33), cap, segments=24)
+    return p
+
+
+def floor_dumbbell(location, turn=0.0):
+    mat = material("dumbbell", COMMON["dumbbell"], roughness=0.3, coat=0.5, sheen=0.0)
+    p = empty("floor_dumbbell", None, location)
+    p.rotation_euler = (0, 0, math.radians(turn))
+    cylinder("db_handle", 0.02, 0.26, p, (0, 0, 0.068), mat, rotation=(0, 90, 0), segments=32)
+    for x in (-0.13, 0.13):
+        cylinder("db_head", 0.068, 0.075, p, (x, 0, 0.068), mat, rotation=(0, 90, 0), bevel=0.014, segments=6)
+    return p
+
+
+def place(r, location, turn):
+    neutral_pose(r)
+    r.root.location = location
+    r.root.rotation_euler = (0, 0, math.radians(turn))
+
+
+def wave(r, side_index):
+    """A hand raised up and out, clear of the head."""
+    set_arm(r, side_index, abduct=124, flex=18)
+
+
+def arms_up(r, spread=134):
+    set_arm(r, 0, abduct=spread, flex=14)
+    set_arm(r, 1, abduct=spread, flex=8)
+
+
+# Each scene: (camera location, camera target, lens), the phone's spot (or None) and a stage function.
+def stage_welcome(variant):
+    her, him = build_character("female"), build_character("male")
+    place(her, (-0.32, -0.12, 0), 16)
+    place(him, (0.32, -0.12, 0), -16)
+    wave(her, 0)
+    wave(him, 1)
+    her.head.rotation_euler = (math.radians(-4), math.radians(-7), 0)
+    him.head.rotation_euler = (math.radians(-4), math.radians(7), 0)
+    set_expression(her, "happy")
+    set_expression(him, "happy")
+    kettlebell((0.84, 0.02, 0), -20)
+    bumper_plate((-0.86, 0.2, 0.215), tilt=(-8, 0, 18))
+    water_bottle((-0.58, 0.46, 0))
+    return [her, him]
+
+
+# With a phone, the character stands to its left and props sit to its right, as in the reference.
+def stage_log(variant):
+    her = build_character("female")
+    place(her, (-0.76, -0.2, 0), 32)
+    set_arm(her, 1, abduct=30, flex=78, inward=6)
+    set_arm(her, 0, abduct=14, flex=-6)
+    her.head.rotation_euler = (math.radians(-10), math.radians(-5), math.radians(12))
+    set_expression(her, "surprised" if variant == "a" else "happy")
+    water_bottle((0.72, -0.24, 0))
+    floor_dumbbell((0.84, 0.18, 0), 28)
+    return [her]
+
+
+def stage_beat(variant):
+    him = build_character("male")
+    place(him, (-0.78, -0.2, 0), 22)
+    set_arm(him, 0, abduct=80, flex=6)
+    him.dumbbells[0].scale = (1, 1, 1)
+    set_arm(him, 1, abduct=12, flex=4)
+    him.body.location.z = 0.244
+    him.head.rotation_euler = (math.radians(-3), 0, math.radians(10))
+    set_expression(him, "effort" if variant == "a" else "happy")
+    kettlebell((0.76, -0.18, 0), 15)
+    bumper_plate((0.64, 0.3, 0.215), tilt=(-10, 0, -22))
+    return [him]
+
+
+def stage_grow(variant):
+    her, him = build_character("female"), build_character("male")
+    place(her, (-0.78, -0.2, 0.07), 14)
+    place(him, (0.78, -0.2, 0), -14)
+    arms_up(her)
+    set_leg(her, 0, 14, 4)
+    set_leg(her, 1, -6, 4)
+    set_arm(him, 1, abduct=128, flex=16)
+    set_arm(him, 0, abduct=34, flex=46, inward=24)
+    her.head.rotation_euler = (math.radians(-8), 0, 0)
+    him.head.rotation_euler = (math.radians(-6), 0, 0)
+    set_expression(her, "happy")
+    set_expression(him, "happy")
+    water_bottle((1.0, 0.3, 0))
+    return [her, him]
+
+
+# Every hero shares one camera and one platform, so the stage holds still while the pages swipe.
+HERO_SCENES = {
+    "welcome": (stage_welcome, False),
+    "log": (stage_log, True),
+    "beat": (stage_beat, True),
+    "grow": (stage_grow, True),
+}
+
+
+def frame_camera(camera):
+    """Product-shot framing, as in the reference: a level camera a few degrees above the platform
+    (HERO["pitch"], seen from its centre), at the distance where the platform spans
+    HERO["plinth_fraction"] of the width, with lens shift (not tilt) lifting the platform until it
+    sits just above the bottom edge. Verticals stay vertical."""
+    from bpy_extras.object_utils import world_to_camera_view
+
+    scene = bpy.context.scene
+    camera.data.lens = HERO["lens"]
+    camera.data.sensor_fit = "HORIZONTAL"
+    camera.rotation_euler = (math.radians(90), 0, 0)
+    half_width = camera.data.sensor_width / 2 / HERO["lens"]
+    distance = HERO["plinth_radius"] / HERO["plinth_fraction"] / half_width
+    camera.location = (0, -distance, distance * math.tan(math.radians(HERO["pitch"])))
+    bottom = Vector((0, -HERO["plinth_radius"], -HERO["plinth_height"]))
+    low, high = -1.0, 1.0
+    for _ in range(40):
+        camera.data.shift_y = (low + high) / 2
+        bpy.context.view_layer.update()
+        # Shifting the frame up moves the platform down the image.
+        if world_to_camera_view(scene, camera, bottom).y > HERO["bottom_margin"]:
+            low = camera.data.shift_y
+        else:
+            high = camera.data.shift_y
+
+
+def screen_rect(screen, camera):
+    """Where the screen lands in the render: x, y, width, height as fractions, top-left origin,
+    plus the corner radius as a fraction of the width."""
+    from bpy_extras.object_utils import world_to_camera_view
+
+    bpy.context.view_layer.update()
+    scene = bpy.context.scene
+    hw = (PHONE["width"] - 2 * PHONE["bezel"]) / 2
+    hh = (PHONE["height"] - 2 * PHONE["bezel"]) / 2
+    front = -0.002
+    corners = [Vector((x, front, z)) for x in (-hw, hw) for z in (-hh, hh)]
+    points = [world_to_camera_view(scene, camera, screen.matrix_world @ c) for c in corners]
+    xs = [p.x for p in points]
+    ys = [1 - p.y for p in points]
+    x, y = min(xs), min(ys)
+    w, h = max(xs) - x, max(ys) - y
+    return {"x": round(x, 5), "y": round(y, 5), "width": round(w, 5), "height": round(h, 5),
+            "corner": round((PHONE["corner"] - PHONE["bezel"]) / (2 * hw) * w, 5)}
+
+
+def render_hero(name, variant, out, rect_out, samples):
+    import json
+
+    stage, has_phone = HERO_SCENES[name]
+    setup_scene(HERO_SIZE[0], samples, lighting="hero", height=HERO_SIZE[1])
+    build_plinth()
+    stage(variant)
+    camera = link(bpy.data.objects.new("camera", bpy.data.cameras.new("camera")))
+    bpy.context.scene.camera = camera
+    frame_camera(camera)
+    rect = None
+    if has_phone:
+        screen = build_phone((0, PHONE["y"], 0), tuple(camera.location))
+        rect = screen_rect(screen, camera)
+    if rect_out:
+        with open(rect_out, "w") as f:
+            json.dump({"scene": name, "size": HERO_SIZE, "screen": rect}, f, indent=2)
+    bpy.context.scene.render.filepath = out
+    bpy.ops.render.render(write_still=True)
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
@@ -683,8 +1091,12 @@ VIEWS = {"front": 0, "three_quarter": 35, "side": 90, "back": 180}
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     parser = argparse.ArgumentParser()
-    parser.add_argument("--character", choices=SPECS.keys(), required=True)
-    parser.add_argument("--mode", choices=("still", "anim"), default="still")
+    parser.add_argument("--character", choices=SPECS.keys(), default="female")
+    parser.add_argument("--mode", choices=("still", "anim", "hero"), default="still")
+    parser.add_argument("--scene", choices=HERO_SCENES.keys(), default="welcome")
+    parser.add_argument("--variant", choices=("a", "b"), default="a")
+    parser.add_argument("--rect-out", default=None)
+    parser.add_argument("--scale", type=float, default=1.0, help="hero resolution scale, for quick tests")
     parser.add_argument("--view", choices=VIEWS.keys(), default="front")
     parser.add_argument("--expression", choices=EXPRESSIONS.keys(), default="neutral")
     parser.add_argument("--shot", choices=("full", "face"), default="full")
@@ -697,6 +1109,11 @@ def main():
     args = parser.parse_args(argv)
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    if args.mode == "hero":
+        global HERO_SIZE
+        HERO_SIZE = (round(HERO_SIZE[0] * args.scale), round(HERO_SIZE[1] * args.scale))
+        render_hero(args.scene, args.variant, args.out, args.rect_out, args.samples)
+        return
     setup_scene(args.res, args.samples)
     rig = build_character(args.character)
 

@@ -1,107 +1,59 @@
 import SwiftUI
 
-// MARK: - Scene layout
+// MARK: - Page chrome
 
-/// Scene headline: SF Pro Compressed Black, scaled with Dynamic Type.
-struct SceneHeadline: View {
-    private let text: String
-    @ScaledMetric(relativeTo: .largeTitle) private var size: CGFloat = 44
-
-    init(_ text: String) {
-        self.text = text
-    }
+/// The near-black canvas with the brand glow falling from the top. The glow fades up once, when
+/// the screen first appears.
+struct GlowBackground: View {
+    @State private var isLit = false
 
     var body: some View {
-        Text(text)
-            .font(.score(size))
-            .foregroundStyle(Theme.chalk)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityAddTraits(.isHeader)
+        ZStack {
+            Theme.canvas
+            Theme.glow()
+                .opacity(isLit ? 1 : 0)
+        }
+        .ignoresSafeArea()
+        .accessibilityHidden(true)
+        .onAppear {
+            // An opacity fade only, so it suits Reduce Motion as well.
+            withAnimation(.easeOut(duration: 1.2)) { isLit = true }
+        }
     }
 }
 
-/// Headline plus an optional one-line subline.
-struct SceneCaption: View {
-    let headline: String
-    var subline: String?
+/// Tracko's mark: a T in an outlined capsule, sized like the reference's (43 × 64 pt).
+/// A placeholder until the brand mark is designed.
+struct LogoMark: View {
+    var isCompact = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.s) {
-            SceneHeadline(headline)
-            if let subline {
-                Text(subline)
-                    .font(.body)
-                    .foregroundStyle(Theme.chalkMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+        let height: CGFloat = isCompact ? 48 : 64
+        Capsule()
+            .strokeBorder(Theme.textPrimary, lineWidth: isCompact ? 3 : 3.5)
+            .frame(width: height * 0.67, height: height)
+            .overlay {
+                Text("T")
+                    .font(TypeScale.illustration(.extraBold, height * 0.44))
+                    .foregroundStyle(Theme.textPrimary)
             }
-        }
-    }
-}
-
-/// Story scene layout: the animated stage on top, the words underneath.
-struct SceneLayout<Stage: View, Caption: View>: View {
-    private let stage: Stage
-    private let caption: Caption
-
-    init(@ViewBuilder stage: () -> Stage, @ViewBuilder caption: () -> Caption) {
-        self.stage = stage()
-        self.caption = caption()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.xl) {
-            stage
-                .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-            caption
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.horizontal, Space.gutter)
-        .padding(.top, Space.m)
-    }
-}
-
-extension SceneLayout where Caption == SceneCaption {
-    init(_ headline: String, subline: String? = nil, @ViewBuilder stage: () -> Stage) {
-        self.init(stage: stage) {
-            SceneCaption(headline: headline, subline: subline)
-        }
+            .accessibilityHidden(true)
     }
 }
 
 // MARK: - Buttons
 
-struct PrimaryButton: View {
-    private let title: String
-    private let isEnabled: Bool
-    private let action: () -> Void
-
-    init(_ title: String, isEnabled: Bool = true, action: @escaping () -> Void) {
-        self.title = title
-        self.isEnabled = isEnabled
-        self.action = action
-    }
-
-    var body: some View {
-        Button(title, action: action)
-            .buttonStyle(PrimaryButtonStyle())
-            .disabled(!isEnabled)
-    }
-}
-
-/// Target yellow: what to do next.
+/// The one filled action on a screen: a light pill, like the reference's Start button.
 struct PrimaryButtonStyle: ButtonStyle {
-    @Environment(\.isEnabled) private var isEnabled
-
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.headline)
-            .foregroundStyle(isEnabled ? Theme.ink : Theme.chalkDim)
-            .frame(maxWidth: .infinity, minHeight: 54)
-            .background(
-                isEnabled ? Theme.target : Theme.slabRaised,
-                in: RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
-            )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .font(TypeScale.button)
+            .foregroundStyle(Theme.canvas)
+            .padding(.horizontal, Space.xl)
+            .frame(minHeight: 48)
+            .background(Theme.textPrimary, in: Capsule())
+            .contentShape(Capsule())
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(Motion.snappy, value: configuration.isPressed)
     }
 }
@@ -109,103 +61,117 @@ struct PrimaryButtonStyle: ButtonStyle {
 struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.headline)
-            .foregroundStyle(Theme.chalk)
-            .frame(maxWidth: .infinity, minHeight: 50)
-            .background(Theme.slabRaised, in: RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .font(TypeScale.button)
+            .foregroundStyle(Theme.textPrimary)
+            .padding(.horizontal, Space.xl)
+            .frame(minHeight: 48)
+            .background(Theme.surfaceRaised, in: Capsule())
+            .contentShape(Capsule())
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(Motion.snappy, value: configuration.isPressed)
     }
 }
 
-/// A selectable option card for data scenes.
-struct ChoiceCard: View {
+/// A button label with a trailing arrow, for moving forward. The arrow is decoration: the
+/// accessible name is the title alone.
+struct AdvanceLabel: View {
     let title: String
-    let detail: String
-    let isSelected: Bool
-    let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: Space.m) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundStyle(Theme.chalk)
-                    Text(detail)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.chalkMuted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(isSelected ? Theme.chalk : Theme.chalkDim)
-            }
-            .multilineTextAlignment(.leading)
-            .padding(Space.l)
-            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-            .background(Theme.slab, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                    .strokeBorder(isSelected ? Theme.chalk : Theme.hairline, lineWidth: isSelected ? 2 : 1)
-            }
-            .contentShape(Rectangle())
+        HStack(spacing: Space.s) {
+            Text(title)
+                .contentTransition(.opacity)
+            Image(systemName: "arrow.right")
+                .fontWeight(.semibold)
+                .accessibilityHidden(true)
         }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
-// MARK: - Scoreboard pieces
+// MARK: - Paging
 
-/// A big rolling percentage: "+10%".
-struct PercentScore: View {
-    let value: Int
-    var size: CGFloat = 88
-    var color: Color = Theme.gain
-
-    var body: some View {
-        Text(LiftMath.formatPercent(value))
-            .font(.score(size))
-            .monospacedDigit()
-            .foregroundStyle(color)
-            .contentTransition(.numericText(value: Double(value)))
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
-    }
-}
-
-/// A horizontal bar on a track. Animate `fraction` to grow it.
-struct VolumeBar: View {
-    /// Share of the track to fill, 0...1.
-    let fraction: Double
-    let color: Color
-    var height: CGFloat = 12
+/// Page dots. The current page is a longer pill, so it doesn't rely on brightness alone.
+/// VoiceOver reads "Page, 2 of 4" and can swipe up or down to change page.
+struct PageDots: View {
+    let count: Int
+    let current: Int
+    let select: (Int) -> Void
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Theme.slabRaised)
+        HStack(spacing: 8) {
+            ForEach(0..<count, id: \.self) { index in
                 Capsule()
-                    .fill(color)
-                    .frame(width: geo.size.width * min(max(fraction, 0), 1))
+                    .fill(index == current ? Theme.textPrimary : Theme.indicator)
+                    .frame(width: index == current ? 18 : 7, height: 7)
             }
         }
-        .frame(height: height)
+        .animation(Motion.snappy, value: current)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Page")
+        .accessibilityValue("\(current + 1) of \(count)")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment where current < count - 1: select(current + 1)
+            case .decrement where current > 0: select(current - 1)
+            default: break
+            }
+        }
+    }
+}
+
+// MARK: - Words
+
+/// A page headline: Geist Bold, centred, slightly tightened, scaled with Dynamic Type.
+struct PageHeadline: View {
+    let text: String
+    @ScaledMetric(relativeTo: .largeTitle) private var tracking = 34 * TypeScale.headlineTracking
+
+    init(_ text: String) {
+        self.text = text
+    }
+
+    var body: some View {
+        Text(text)
+            .font(TypeScale.headline)
+            .tracking(tracking)
+            .foregroundStyle(Theme.textPrimary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// The line under a headline.
+struct PageSubline: View {
+    let text: String
+
+    init(_ text: String) {
+        self.text = text
+    }
+
+    var body: some View {
+        Text(text)
+            .font(TypeScale.body)
+            .lineSpacing(3)
+            .foregroundStyle(Theme.textSecondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
 #Preview("Components") {
-    VStack(alignment: .leading, spacing: Space.l) {
-        SceneHeadline("Always know the number to beat.")
-        PercentScore(value: 10)
-        VolumeBar(fraction: 0.9, color: Theme.past)
-        VolumeBar(fraction: 1, color: Theme.gain)
-        ChoiceCard(title: "Build muscle", detail: "Beat your numbers week on week.", isSelected: true) {}
-        PrimaryButton("Continue") {}
-        PrimaryButton("Continue", isEnabled: false) {}
+    VStack(spacing: Space.xl) {
+        LogoMark()
+        PageHeadline("Always know the number to beat")
+        PageSubline("Every lift opens with what beats last time.")
+        PageDots(count: 4, current: 1) { _ in }
+        Button {} label: { AdvanceLabel(title: "Continue") }
+            .buttonStyle(PrimaryButtonStyle())
+        Button("Replay onboarding") {}
+            .buttonStyle(SecondaryButtonStyle())
     }
     .padding(Space.gutter)
-    .background(Theme.ink)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background { GlowBackground() }
+    .onAppear { Fonts.register() }
 }

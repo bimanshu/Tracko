@@ -59,7 +59,7 @@ jobs:
             -quiet \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee xcodebuild.log
 
-      - name: Screenshot every scene
+      - name: Screenshot every onboarding page
         if: ${{ !cancelled() && hashFiles('build/Build/Products/Debug-iphonesimulator/Tracko.app/Info.plist') != '' }}
         run: |
           APP=build/Build/Products/Debug-iphonesimulator/Tracko.app
@@ -73,9 +73,9 @@ jobs:
             xcrun simctl ui "$udid" appearance dark
             xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 || true
             xcrun simctl install "$udid" "$APP"
-            for scene in 0 1 2 3 4 5 6 7 8; do
+            for scene in 0 1 2 3; do
               xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE" -TrackoStartScene "$scene" > /dev/null
-              sleep 7
+              sleep 8
               xcrun simctl io "$udid" screenshot "screenshots/${tag}-scene-${scene}.png" > /dev/null 2>&1
             done
             xcrun simctl shutdown "$udid" || true
@@ -97,7 +97,7 @@ jobs:
                              key=lambda p: int(p.rsplit("-", 1)[1].split(".")[0]))
               if not files:
                   continue
-              width, gap, columns = 360, 16, 5
+              width, gap, columns = 360, 16, 4
               shots = [Image.open(f).convert("RGB") for f in files]
               shots = [s.resize((width, round(s.height * width / s.width))) for s in shots]
               height = max(s.height for s in shots)

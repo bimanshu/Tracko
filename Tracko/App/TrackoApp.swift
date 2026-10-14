@@ -4,6 +4,10 @@ import SwiftUI
 struct TrackoApp: App {
     @AppStorage(StorageKey.onboardingComplete) private var onboardingComplete = false
 
+    init() {
+        Fonts.register()
+    }
+
     var body: some Scene {
         WindowGroup {
             ZStack {
