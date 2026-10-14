@@ -12,13 +12,15 @@ struct OnboardingPageView: View {
     @State private var replay = 0
 
     var body: some View {
-        // At the largest text sizes the words need the room: the page scrolls instead.
+        // At the largest text sizes the words need the room: the page scrolls instead, and
+        // flashes its scroll indicator so the text below the edge doesn't look cut off.
         ViewThatFits(in: .vertical) {
             content
             ScrollView {
                 content
             }
             .scrollBounceBehavior(.basedOnSize)
+            .scrollIndicatorsFlash(onAppear: true)
         }
         .sensoryFeedback(.success, trigger: answered) { _, new in new }
     }

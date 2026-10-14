@@ -305,7 +305,7 @@ struct GrowPhoneScreen: View {
                 Text(demo.exerciseName)
                     .font(PhoneText.title)
                     .foregroundStyle(Theme.textPrimary)
-                Text("Estimated max, \(demo.growthWeeks) weeks")
+                Text("Estimated max")
                     .font(PhoneText.label)
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.top, 2)
@@ -325,7 +325,7 @@ struct GrowPhoneScreen: View {
 
                 Spacer(minLength: 8)
 
-                PhoneVerdict(percent: percent, reason: "Stronger than in week 1.")
+                PhoneVerdict(percent: percent, reason: "Since week 1.")
                     .opacity(showsScore ? 1 : 0)
             }
         }

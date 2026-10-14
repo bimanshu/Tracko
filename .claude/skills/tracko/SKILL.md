@@ -177,29 +177,36 @@ UI craft skills from `jakubkrehel/skills` are installed in `.claude/skills/` (`b
 **Your log, on a stage.** A near-black canvas with a soft green glow falling from the top; 3D characters on a round platform beside a giant phone that shows Tracko's own live screen; one bold headline. Numbers do the shouting, in brand green. Motion still flows **note → maths → proof**.
 
 ### 9.2 Colour (OKLCH, rendered in Display P3)
-Tokens are written in OKLCH: `Palette` holds the ramps (primitives), `Theme` names what each is for, and views only use `Theme`. `design/tools/palette.py` prints each token's P3 and sRGB values, gamut and contrast; `ColorTests` checks the same in CI. Keep both in sync with `Theme.swift`.
+Tokens are written in OKLCH. `Palette` holds the primitives (ramps named by hue and step); `Theme.Roles` maps each role to a primitive for the standard appearance and for **Increase Contrast**; `Theme.<role>` is the dynamic colour views use. Views never use `Palette`, and never borrow a token outside its role (no text colour as a fill, no page colour as text). `design/tools/palette.py` prints every primitive's P3/sRGB values and gamut, and every pair's **WCAG 2 ratio and APCA Lc in both appearances**; `ColorTests` checks the same in CI.
 
-| Theme token | Palette | OKLCH | Use |
-|---|---|---|---|
-| canvas | neutral950 | 0.090 0.004 160 | App background, near-black (the reference's is black) |
-| surface / surfaceRaised | neutral900 / 850 | 0.170 0.008 160 / 0.225 0.010 160 | Screens, cards / cards on cards, bar tracks |
-| border | neutral800 | 0.290 0.012 160 | Structure only |
-| indicator | neutral600 | 0.480 0.012 160 | Inactive page dots (3.2:1 on canvas) |
-| textTertiary / textSecondary / textPrimary | neutral500 / 300 / 50 | 0.640 / 0.800 / 0.975 | Text (6.2 / 11.1 / 19.3:1 on canvas) |
-| **accent** | green300 | 0.850 0.235 152 | **Brand and growth:** gains, the +%, a beaten target. Beyond sRGB on purpose |
-| accentMuted | green900 | 0.330 0.085 152 | Tinted fills behind accent content |
-| glow | green600 | 0.500 0.170 152 | The top glow only: fades to canvas by 52% of the height, mixed in OKLab (shape measured from 006) |
+| Role | Standard → Increase Contrast | Use |
+|---|---|---|
+| bgPage | neutral950 (L 0.090) | The page, near-black (the reference's is black); also the phone screens |
+| bgRaised | neutral850 (0.225) | Set tiles, bar tracks, secondary buttons |
+| bgInverse | neutral50 (0.975) | The one light surface: the primary button |
+| border | neutral800 (0.290) → neutral600 | Dividers only |
+| textPrimary | neutral50 (0.975) | Headlines, titles (APCA Lc −102) |
+| textSecondary | neutral300 (0.850) → neutral50 | Sublines, details (Lc −77) |
+| textTertiary | neutral400 (0.770) → neutral100 | Labels on the page (Lc −62) |
+| textInverse | neutral950 | Text on bgInverse and on accent fills |
+| fillSubtle | neutral600 (0.570) → neutral400 | Inactive page dots (Lc −31) |
+| fillStrong | neutral300 → neutral50 | Neutral bars and markers |
+| **accent** | green300 (0.850 0.235 152) | **Brand and growth:** gains, the +%, a beaten target. Beyond sRGB on purpose |
+| glow | green600 (0.500 0.170 152) | `Theme.glow()` only: fades to the page by 52% of the height, mixed in OKLab, under a faint grain against banding |
 
-- **Green means growth, and is the brand.** It merges the old "gain" signal; the glow is its one decorative use (owner's decision, 2026-10-14). Never use green for anything that isn't growth or the brand.
-- **Reserved for later features**, to be added in OKLCH when first used: target (yellow, what to do next), muscle (red, muscles trained; never losses or bodyweight), past (blue, history and ghosts).
-- The primary button is a light pill (textPrimary fill, canvas label), as in the reference: one per screen.
+- Thresholds (APCA |Lc| / WCAG): body 75 / 4.5, labels 60 / 4.5, large text 45 / 3, UI parts 30 / 3. Fix failures by lightness only, holding hue and chroma. Increase Contrast moves each muted role 15+ points of lightness further from the page.
+- **Green means growth, and is the brand** (merged with "gain"); the glow is its one decorative use. Never use green for anything else.
+- Neutrals carry a trace of the brand hue (160°, chroma ≤ 0.012). Steps sit closer at the light end, where text lives. Primitives nothing uses are removed.
+- **Reserved for later features**, added in OKLCH when first used: target (yellow), muscle (red; never losses or bodyweight), past (blue).
 
 ### 9.3 Type
 - **Geist** (SIL OFL, `DesignSystem/Fonts/`), registered at launch by `Fonts.register()`. Faces: Regular, SemiBold, Bold, ExtraBold.
-- **Scale (`TypeScale`, Dynamic Type):** wordmark 52 ExtraBold, −3.5% tracking · intro 24 SemiBold · headline 34 Bold, −2% · body 17 Regular, +3 pt line spacing · button 17 SemiBold.
-- Text inside an illustration (the hero phone's screen) uses fixed sizes via `TypeScale.illustration`; the illustration carries a VoiceOver label instead.
-- `.monospacedDigit()` on changing numbers. No monospace labels, no all-caps eyebrows.
-- iOS 17 can't set line height below the font's own (Geist ≈ 1.3); keep headlines to two short lines.
+- **Scale (`TypeScale`, Dynamic Type):** wordmark 52 ExtraBold, −3.5% · intro 24 SemiBold · headline 34 Bold, −2%, line height 1.1 · body 17 Regular, line height 1.45 · button 17 SemiBold.
+- **Headlines and sublines use `BalancedText`** (a UILabel bridge): it sets the line height (SwiftUI on iOS 17 can't go below Geist's 1.3) and balances the lines like CSS `text-wrap: balance`, so two-line headlines split evenly and nothing ends on one short word.
+- **Bold Text** steps every face up one weight (`TypeScale.Weight.resolved`).
+- Keep short values on one line with `.keptTogether` (non-breaking spaces): "8 × 12, 11, 10".
+- Text inside an illustration (the hero phone) uses fixed sizes via `TypeScale.illustration`, laid out near its drawn size (140 pt wide) so nothing renders below ~8 pt; the illustration carries a VoiceOver label instead.
+- `.monospacedDigit()` on changing numbers. No monospace labels, no all-caps eyebrows. Curly quotes and the true × and − signs.
 
 ### 9.4 Motion
 - One orchestrated moment per scene; everything else still.
@@ -207,7 +214,9 @@ Tokens are written in OKLCH: `Palette` holds the ramps (primitives), `Theme` nam
 - Numbers roll with `.contentTransition(.numericText(value:))`.
 - Honest motion: growth curves slow down over time.
 - **Reduce Motion:** jump to the final frame (or crossfade). Every page must handle it.
-- Buttons scale to 0.96 when pressed. The glow fades in once when the app opens. Each onboarding page has one moment: its phone screen's script.
+- Buttons scale to 0.96 when pressed, eased out over 150 ms (`Motion.press`). The glow fades in once when the app opens.
+- **First launch enters in stages** (`.entrance(step)`): logo, hero, words, dots, button, 100 ms apart, each rising 12 pt out of a 4 pt blur; with Reduce Motion they only fade. Never stagger routine changes.
+- Each onboarding page has one moment: its phone screen's script.
 
 ### 9.5 Haptics (`.sensoryFeedback`)
 - Set logged → `.impact(weight: .light)`
@@ -215,7 +224,7 @@ Tokens are written in OKLCH: `Palette` holds the ramps (primitives), `Theme` nam
 - Slider and option changes → `.selection`
 
 ### 9.6 Accessibility
-Dynamic Type for all non-score text; VoiceOver labels describe what an animation shows (each hero is one image element with a description built from the demo numbers); decorative pieces `accessibilityHidden`; tap targets ≥ 44 pt (the pill is 48); never rely on colour alone (the current page dot is also longer). Page dots are adjustable for VoiceOver. At the largest text sizes an onboarding page scrolls rather than clipping (`ViewThatFits`).
+Dynamic Type for all non-score text; VoiceOver labels describe what an animation shows (each hero is one image element with a description built from the demo numbers); decorative pieces `accessibilityHidden`; tap targets ≥ 44 pt (the pill is 48); never rely on colour alone (the current page dot is also longer). Page dots are adjustable for VoiceOver; each hero has a "Replay animation" action. At the largest text sizes an onboarding page scrolls rather than clipping (`ViewThatFits`). Decorative layers (glow, grain) take no touches. CI screenshots every page with Increase Contrast and at the largest accessibility text size.
 
 ### 9.7 Characters
 Two chibi characters, female and male, carry the story. **v0.2 look** (owner: "polish it more like the Any Distance mascot"): glossy vinyl-toy finish, black-and-white colour blocking with brand-green details (she: white top, black leggings, green hair tie; he: black top, white shorts, white cap with a green badge), big glossy eyes with a white rim, thumbs, chunky sneakers on a green midsole. Both come from one recipe (`characters/build/tracko_characters.py`), so any pose works for both; expressions swap rather than morph; numbers are drawn by the app, never baked into a render.
@@ -293,6 +302,7 @@ Onboarding completion (reaching page 4 and tapping Start tracking); time on each
 ---
 
 ## 13. Changelog (newest first)
+- **2026-10-14 · v0.2.1** Polish pass against the better-* skills: role tokens used only in their role, every colour pair passing APCA as well as WCAG in standard and Increase Contrast, grain against banding; balanced 1.1 headlines (BalancedText), Bold Text, kept-together values, larger phone-screen text and a simpler beat screen; optical button padding, 150 ms press, staged first-launch entrance; VoiceOver replay action; CI screenshots for Increase Contrast and the largest text size.
 - **2026-10-14 · v0.2** Onboarding rebuilt in the style of the priority-1 reference (Any Distance, 005/006) at the owner's direction: 4 pages, 3D heroes with live phone screens, near-black canvas with a soft green glow, light pill button. Green is now the brand colour (merging "gain"). Colour tokens moved to OKLCH (Display P3), type to Geist. Characters v0.2 (vinyl-toy finish). Goal, history and the notification ask moved out of onboarding. The nine v0.1 scenes and the shape body figure were removed (see git history before 7d2a7e5).
 - **2026-10-02** Characters v0.1: female and male clay chibis built in Blender from one script, character sheets, and an 8 s "gym log" clip (transparent master + preview). Added §9.7.
 - **2026-10-02** Started the UI reference library (`design/references/`) ahead of a big visual polish pass; skill §9.0 points to it.
