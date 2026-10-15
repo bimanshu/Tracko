@@ -22,9 +22,13 @@ private struct PhoneVerdict: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
+            // The screen has 116 pt for it. Some faces and locales ("+25 %") run wider: then the
+            // number shrinks a little rather than truncating.
             Text(LiftMath.formatPercent(percent))
                 .font(PhoneText.score)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
                 .foregroundStyle(Theme.accent)
                 .contentTransition(.numericText(value: Double(percent)))
             Text(reason)
