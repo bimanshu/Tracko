@@ -27,7 +27,6 @@ With a free Apple ID the app stops opening after 7 days. Press Run again to rene
 ### Handy while developing
 
 - Tap a page's picture to replay its phone animation.
-- Debug builds show a typeface picker at the bottom of the onboarding (Outfit, Lexend, Sora, Jakarta, Poppins). It switches the whole screen in place and remembers your pick; `-TrackoFont <name>` sets it at launch.
 - In Debug builds, the launch argument `-TrackoStartScene <0–3>` opens onboarding on that page. Set it in **Product → Scheme → Edit Scheme → Run → Arguments**.
 - After onboarding finishes, the placeholder home screen has **Replay onboarding**.
 - The pages and components have SwiftUI previews, so you can open the canvas with ⌥⌘↩.

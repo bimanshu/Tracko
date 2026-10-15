@@ -1,7 +1,7 @@
 import CoreText
 import Foundation
 
-/// Registers every font bundled with the app (DesignSystem/Fonts, all SIL OFL) for this process.
+/// Registers the fonts bundled with the app (DesignSystem/Fonts: Lexend, SIL OFL) for this process.
 /// Call once at launch, and in previews, before any view uses `TypeScale`.
 enum Fonts {
     static func register() {

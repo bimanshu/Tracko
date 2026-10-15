@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 /// Display text with the typography SwiftUI can't do on iOS 17:
-/// - a set line height (headlines at 1.1, not the font's own 1.3),
+/// - a set line height (headlines at 1.1, not the font's own 1.25),
 /// - balanced line breaks, like CSS `text-wrap: balance`: the narrowest width that keeps the
 ///   same number of lines, so two-line headlines split evenly and no line ends in one word,
 /// - letter-spacing in em,
@@ -26,8 +26,6 @@ struct BalancedText: UIViewRepresentable {
     var color: Color = Theme.textPrimary
     var alignment: NSTextAlignment = .center
     var isHeader = false
-    /// The typeface, read as the view is made, so a change of `TypeScale.family` redraws it.
-    let family = TypeScale.family
 
     func makeUIView(context: Context) -> UILabel {
         let label = UILabel()
@@ -75,7 +73,7 @@ struct BalancedText: UIViewRepresentable {
 
     private func attributedText(in environment: EnvironmentValues) -> NSAttributedString {
         let weight = environment.legibilityWeight == .bold ? style.boldWeight : style.weight
-        let base = UIFont(name: family.fontName(weight), size: style.size) ?? .systemFont(ofSize: style.size)
+        let base = UIFont(name: weight.fontName, size: style.size) ?? .systemFont(ofSize: style.size)
         let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(environment.dynamicTypeSize))
         let font = UIFontMetrics(forTextStyle: style.textStyle).scaledFont(for: base, compatibleWith: traits)
 

@@ -22,10 +22,9 @@ Working name in the early concept decks: "Everything Gym". The product is now **
 | Area | State | Notes |
 |---|---|---|
 | Onboarding (4 pages) | Built v0.2 | Any Distance layout (§11): welcome, log it like a note, number to beat, get stronger. 3D heroes with live phone screens, under a green spotlight; the characters blink and smile |
-| Design system | Built v0.2 | OKLCH tokens rendered in Display P3, type scale (Geist until a new face is picked), green spotlight (§9) |
+| Design system | Built v0.2 | OKLCH tokens rendered in Display P3, Lexend type scale, green spotlight (§9) |
 | Characters (female, male) | Built v0.2 | Vinyl-toy finish, onboarding heroes, sheets (`characters/`). The "gym log" clip is still the v0.1 look |
 | Goal, notes import, baseline, notification ask | Moved out of onboarding | Owner capped onboarding at 4 pages; these move to the app's first run (not built) |
-| Typeface | Under evaluation (Debug), round 3 | Geist reads too technical (owner, 2026-10-15). The owner leaned to Outfit but wants a taller x-height: candidates Outfit (reference), Lexend, Sora, Plus Jakarta Sans, Poppins. Picker in Debug builds; `-TrackoFont <name>`; release builds stay on Geist until one is picked, then `Onboarding/Variants/` is deleted |
 | Logo | Placeholder | A "T" in a capsule, until the brand mark is designed |
 | Logging, growth report, home | Not started | |
 
@@ -202,11 +201,11 @@ Tokens are written in OKLCH. `Palette` holds the primitives (ramps named by hue 
 - **Reserved for later features**, added in OKLCH when first used: target (yellow), muscle (red; never losses or bodyweight), past (blue).
 
 ### 9.3 Type
-- **Typeface: under review.** Release builds use **Geist** (SIL OFL); the owner finds it too technical. Round 2 (Satoshi, Figtree, Outfit, Rubik, Bricolage Grotesque) leaned to **Outfit**, whose short lowercase (x-height 0.475 of the size) reads small. Round 3 compares round geometric faces with taller x-heights, at the same scale (`TypeScale.Family`, picker at the bottom of the onboarding, `-TrackoFont <name>`): **Outfit** 0.475 (reference), **Lexend** 0.525 (wide, even spacing), **Sora** 0.534 (squared details, crisp), **Plus Jakarta Sans** 0.536 (tall caps, tight spacing), **Poppins** 0.548 (round, full bold). Lexend and Poppins have no tabular figures, so changing numbers shift slightly. To pick one, set `TypeScale.Family.default`, retune `TypeScale` for its metrics, and delete `Onboarding/Variants/`.
-- Fonts live in `DesignSystem/Fonts/` (four faces each: regular, semibold, bold, extra bold; files named by PostScript name) and `Fonts.register()` registers them all at launch. All are SIL OFL from Google Fonts, each with its `<Family>-OFL.txt`. Only bundle fonts whose licence lets them live in a public repo.
-- `TypeScale.family` is observable: views resolve font names as they draw, so switching it redraws in place.
+- **Lexend** (SIL OFL, `DesignSystem/Fonts/` with `Lexend-OFL.txt`), registered at launch by `Fonts.register()`. Faces: Regular, SemiBold, Bold, ExtraBold. A round geometric sans drawn for reading ease: wide, evenly spaced, with a tall x-height (0.525 of the size). Chosen by the owner on 2026-10-15 over Geist ("too technical") after three picker rounds (Satoshi, Figtree, Outfit, Rubik, Bricolage Grotesque; then Outfit, Sora, Plus Jakarta Sans, Poppins): Outfit's round shapes, but larger-reading text. Its x-height matches Geist's (0.530), so the scale carried over unchanged.
+- Lexend has **no tabular figures**: `.monospacedDigit()` does nothing, so a counting number's width changes as it counts. Keep counting numbers at the end of their line (nothing after them to push), and check it on any new counter.
+- Only bundle fonts whose licence lets them live in a public repo (this one is public).
 - **Scale (`TypeScale`, Dynamic Type):** wordmark 52 ExtraBold, −3.5% · intro 24 SemiBold · headline 34 Bold, −2%, line height 1.1 · body 17 Regular, line height 1.45 · button 17 SemiBold.
-- **Headlines and sublines use `BalancedText`** (a UILabel bridge): it sets the line height (SwiftUI on iOS 17 can't go below a font's own, about 1.3) and balances the lines like CSS `text-wrap: balance`, so two-line headlines split evenly and nothing ends on one short word.
+- **Headlines and sublines use `BalancedText`** (a UILabel bridge): it sets the line height (SwiftUI on iOS 17 can't go below Lexend's own 1.25) and balances the lines like CSS `text-wrap: balance`, so two-line headlines split evenly and nothing ends on one short word.
 - **Bold Text** steps every face up one weight (`TypeScale.Weight.resolved`).
 - Keep short values on one line with `.keptTogether` (non-breaking spaces): "8 × 12, 11, 10".
 - Text inside an illustration (the hero phone) uses fixed sizes via `TypeScale.illustration`, laid out near its drawn size (140 pt wide) so nothing renders below ~8 pt; the illustration carries a VoiceOver label instead.
@@ -246,17 +245,16 @@ Two chibi characters, female and male, carry the story. Idle expressions (blinks
   Tracko/
     App/            TrackoApp, HomePlaceholderView
     Core/           LiftMath (formulas, units)
-    DesignSystem/   OKLCH, Theme (Palette, Theme, TypeScale, Space, Radius, Motion), Components, Fonts (+ font files)
+    DesignSystem/   OKLCH, Theme (Palette, Theme, TypeScale, Space, Radius, Motion), Components, Fonts (+ Lexend)
     Onboarding/     OnboardingModel, OnboardingFlowView, OnboardingPageView, OnboardingHero, Hero, Spotlight,
                     PhoneScreens, HeroRender (generated), Script, DemoContent
-                    Variants/ (Debug only: the typeface picker, deleted once one is chosen)
     Assets.xcassets/Onboarding/   hero renders (generated)
   TrackoTests/      LiftMathTests (§7 examples), ColorTests (gamut, contrast), DemoContentTests
   ```
 - **Project:** `Tracko.xcodeproj` (Xcode 16+) uses synchronized folders: files added under `Tracko/` or `TrackoTests/` join their target automatically, so never hand-edit the project for a new file. Swift 5 language mode, iPhone only, portrait. Bundle ID `com.bimanshu.tracko`.
 - **CI:** `.github/workflows/ios.yml` runs on every push that touches the app: builds, runs the tests, then launches each onboarding scene on an iPhone Pro and an iPhone SE simulator and uploads screenshots (plus a contact sheet per device) as the `screenshots` artifact. The JPEGs are also force-pushed to the `ci-screenshots` branch (`git fetch origin ci-screenshots`), which cloud sessions can read when the artifact host is blocked. Check both after every change; cloud sessions can't compile locally.
 - **Running on a phone:** steps in `README.md` (Xcode + free Apple ID, 7-day expiry).
-- **Debug launch arguments:** `-TrackoStartScene <0–3>` opens onboarding on that page; `-TrackoFont <outfit|lexend|sora|jakarta|poppins>` picks the typeface (both used by CI screenshots).
+- **Debug launch argument:** `-TrackoStartScene <0–3>` opens onboarding on that page (used by CI screenshots).
 - **Generated files:** `HeroRender.swift` and the hero PNGs come from `python3 characters/build/render_all.py heroes` (Blender 4.5). Re-render rather than edit them.
 - **Conventions:**
   - Scripted animations: `@MainActor func play() async` driven by `.task(id: ScriptRun(isActive:replay:))`, steps separated by `guard await Script.wait(x) else { return }` so leaving a page cancels and rewinds cleanly. Tap a hero to replay.
@@ -307,6 +305,7 @@ Onboarding completion (reaching page 4 and tapping Start tracking); time on each
 ---
 
 ## 13. Changelog (newest first)
+- **2026-10-15 · v0.2.4** Type is now **Lexend** (owner's pick from round 3). The other candidates, Geist and the picker were removed; the scale is unchanged, since Lexend's x-height matches Geist's.
 - **2026-10-15 · v0.2.3** Typeface round 3: the owner liked Outfit but wants a taller x-height, so Debug builds now compare Outfit with Lexend, Sora, Plus Jakarta Sans and Poppins (round geometric faces, x-height 0.525–0.548 against Outfit's 0.475). Round 2's other faces, and the Satoshi download script, were removed (git history: 2b8bb0a). The phone screen's score shrinks rather than truncating when a face runs wide.
 - **2026-10-15 · v0.2.2** Spotlight promoted from the onboarding variants (owner's pick over Stage and Window): a green beam onto the platform and a pool around the figures replace the glow from the top, and the characters blink and smile on the active page. New `spotlight` role. Typeface round started: Geist reads too technical, so Debug builds compare Satoshi, Figtree, Outfit, Rubik and Bricolage Grotesque; `TypeScale.family` is observable. Satoshi is fetched by `scripts/fetch-fonts.sh`, never committed (licence).
 - **2026-10-14 · v0.2.1** Polish pass against the better-* skills: role tokens used only in their role, every colour pair passing APCA as well as WCAG in standard and Increase Contrast, grain against banding; balanced 1.1 headlines (BalancedText), Bold Text, kept-together values, larger phone-screen text and a simpler beat screen; optical button padding, 150 ms press, staged first-launch entrance; VoiceOver replay action; CI screenshots for Increase Contrast and the largest text size.

@@ -1,4 +1,3 @@
-import Observation
 import SwiftUI
 import UIKit
 
@@ -115,55 +114,22 @@ enum Theme {
     }
 }
 
-/// The type scale, named by use. Sizes follow Dynamic Type, and the Bold Text setting steps each
-/// face up one weight. The typeface is `family`: release builds use the default; Debug builds can
-/// switch it to compare candidates (Onboarding/Variants).
+/// The type scale, named by use, in Lexend (SIL OFL, DesignSystem/Fonts): a round geometric sans
+/// drawn for reading ease. Sizes follow Dynamic Type, and the Bold Text setting steps each face
+/// up one weight.
 enum TypeScale {
-    /// The typeface in use. Views read it as they draw, and it's observable: change it and every
-    /// view that uses it redraws in place, keeping its state.
-    static var family: Family {
-        get { typeface.family }
-        set { typeface.family = newValue }
-    }
-
-    private static let typeface = Typeface()
-
-    /// Sans-serif families bundled with the app (DesignSystem/Fonts), each with four roles.
-    enum Family: String, CaseIterable, Identifiable {
-        case geist, outfit, poppins, sora, jakarta, lexend
-
-        static let `default` = Family.geist
-
-        var id: String { rawValue }
-
-        var name: String {
-            switch self {
-            case .geist: return "Geist"
-            case .outfit: return "Outfit"
-            case .poppins: return "Poppins"
-            case .sora: return "Sora"
-            case .jakarta: return "Jakarta"
-            case .lexend: return "Lexend"
-            }
-        }
-
-        /// The start of each face's PostScript name, as in "PlusJakartaSans-Bold".
-        private var postScriptFamily: String {
-            self == .jakarta ? "PlusJakartaSans" : name
-        }
-
-        /// The PostScript name of this family's face for a weight.
-        func fontName(_ weight: Weight) -> String {
-            let style = ["Regular", "SemiBold", "Bold", "ExtraBold"][weight.rawValue]
-            return postScriptFamily + "-" + style
-        }
-    }
-
-    enum Weight: Int {
+    enum Weight {
         case regular, semibold, bold, extraBold
 
-        /// This weight's font in the current family.
-        var fontName: String { TypeScale.family.fontName(self) }
+        /// This weight's face (its PostScript name).
+        var fontName: String {
+            switch self {
+            case .regular: return "Lexend-Regular"
+            case .semibold: return "Lexend-SemiBold"
+            case .bold: return "Lexend-Bold"
+            case .extraBold: return "Lexend-ExtraBold"
+            }
+        }
 
         /// One step heavier, for Bold Text.
         var bolder: Weight {
@@ -191,7 +157,7 @@ enum TypeScale {
     )
 
     /// The Tracko wordmark on the welcome page (already the heaviest face), tightened 3.5%.
-    static var wordmark: Font { .custom(Weight.extraBold.fontName, size: 52, relativeTo: .largeTitle) }
+    static let wordmark = Font.custom(Weight.extraBold.fontName, size: 52, relativeTo: .largeTitle)
     static let wordmarkTracking = -0.035
 
     /// "Welcome to", above the wordmark.
@@ -210,12 +176,6 @@ enum TypeScale {
     static func illustration(_ weight: Weight, _ size: CGFloat) -> Font {
         Font.custom(weight.fontName, fixedSize: size)
     }
-}
-
-/// Holds `TypeScale.family`, so SwiftUI tracks which views read it. Use `TypeScale.family`.
-@Observable
-final class Typeface {
-    var family = TypeScale.Family.default
 }
 
 enum Space {

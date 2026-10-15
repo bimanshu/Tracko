@@ -6,9 +6,6 @@ struct TrackoApp: App {
 
     init() {
         Fonts.register()
-        #if DEBUG
-        FontVariantHost.prepare()
-        #endif
     }
 
     var body: some Scene {
@@ -18,14 +15,8 @@ struct TrackoApp: App {
                     HomePlaceholderView { onboardingComplete = false }
                         .transition(.opacity)
                 } else {
-                    #if DEBUG
-                    // Debug builds host the typeface candidates behind a picker (Onboarding/Variants).
-                    FontVariantHost { onboardingComplete = true }
-                        .transition(.opacity)
-                    #else
                     OnboardingFlowView { onboardingComplete = true }
                         .transition(.opacity)
-                    #endif
                 }
             }
             .animation(Motion.fade, value: onboardingComplete)

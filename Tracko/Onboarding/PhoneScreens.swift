@@ -7,12 +7,12 @@ import SwiftUI
 // Labels in the top ~80 pt sit on the screen's glow, so they use textSecondary, not textTertiary.
 
 private enum PhoneText {
-    static var label: Font { TypeScale.illustration(.semibold, 10.5) }
-    static var title: Font { TypeScale.illustration(.bold, 15) }
-    static var note: Font { TypeScale.illustration(.regular, 14) }
-    static var detail: Font { TypeScale.illustration(.regular, 11.5) }
-    static var tile: Font { TypeScale.illustration(.bold, 14) }
-    static var score: Font { TypeScale.illustration(.extraBold, 40) }
+    static let label = TypeScale.illustration(.semibold, 10.5)
+    static let title = TypeScale.illustration(.bold, 15)
+    static let note = TypeScale.illustration(.regular, 14)
+    static let detail = TypeScale.illustration(.regular, 11.5)
+    static let tile = TypeScale.illustration(.bold, 14)
+    static let score = TypeScale.illustration(.extraBold, 40)
 }
 
 /// The verdict at the foot of a phone screen: the number first, then the plain reason (§8).
@@ -22,8 +22,9 @@ private struct PhoneVerdict: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            // The screen has 116 pt for it. Some faces and locales ("+25 %") run wider: then the
-            // number shrinks a little rather than truncating.
+            // The screen has 116 pt for it ("+25%" needs 111). A wider locale ("+25 %") shrinks the
+            // number a little rather than truncating it. Lexend has no tabular figures, so the
+            // "%" drifts a few points while the number counts; nothing else on the line moves.
             Text(LiftMath.formatPercent(percent))
                 .font(PhoneText.score)
                 .monospacedDigit()

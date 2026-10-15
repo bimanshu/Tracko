@@ -85,13 +85,8 @@ jobs:
           }
           MAIN="${{ steps.sims.outputs.main }}"
           COMPACT="${{ steps.sims.outputs.compact }}"
-          # Typeface candidates (Debug harness, Onboarding/Variants). Unnamed runs use the first.
-          FONTS="outfit lexend sora jakarta poppins"
           prepare "$MAIN"
           shots "$MAIN" main
-          for font in $FONTS; do
-            shots "$MAIN" "font-${font}" -TrackoFont "$font"
-          done
           # Increase Contrast: muted text and dots should brighten.
           if xcrun simctl ui "$MAIN" increase_contrast enabled; then
             shots "$MAIN" main-contrast
@@ -101,12 +96,9 @@ jobs:
           if [ -n "$COMPACT" ]; then
             prepare "$COMPACT"
             shots "$COMPACT" compact
-            # The largest accessibility text size on the smallest phone: nothing may clip, in any
-            # candidate typeface.
+            # The largest accessibility text size on the smallest phone: nothing may clip.
             if xcrun simctl ui "$COMPACT" content_size accessibility-extra-extra-extra-large; then
-              for font in $FONTS; do
-                shots "$COMPACT" "compact-ax-${font}" -TrackoFont "$font"
-              done
+              shots "$COMPACT" compact-ax
               xcrun simctl ui "$COMPACT" content_size large || true
             fi
             xcrun simctl shutdown "$COMPACT" || true
