@@ -48,6 +48,10 @@ jobs:
           EOF
           cat "$GITHUB_OUTPUT"
 
+      # Satoshi may not be redistributed, so it isn't in the repository: fetch it for the build.
+      - name: Fetch fonts
+        run: ./scripts/fetch-fonts.sh || echo "::warning::Satoshi could not be fetched, so it can't be picked in this build."
+
       - name: Build and test
         run: |
           set -o pipefail
@@ -73,25 +77,24 @@ jobs:
             xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 || true
             xcrun simctl install "$udid" "$APP"
           }
+          # shots <device> <tag> [launch arguments...]
           shots() {
             local udid=$1 tag=$2
+            shift 2
             for scene in 0 1 2 3; do
-              xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE" -TrackoStartScene "$scene" > /dev/null
+              xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE" -TrackoStartScene "$scene" "$@" > /dev/null
               sleep 8
               xcrun simctl io "$udid" screenshot "screenshots/${tag}-scene-${scene}.png" > /dev/null 2>&1
             done
           }
           MAIN="${{ steps.sims.outputs.main }}"
           COMPACT="${{ steps.sims.outputs.compact }}"
+          # Typeface candidates (Debug harness, Onboarding/Variants). Unnamed runs use the first.
+          FONTS="satoshi figtree outfit rubik bricolage"
           prepare "$MAIN"
           shots "$MAIN" main
-          # Onboarding variants (Debug harness): the same pages in each candidate layout.
-          for variant in window spotlight; do
-            for scene in 0 1 2 3; do
-              xcrun simctl launch --terminate-running-process "$MAIN" "$BUNDLE" -TrackoStartScene "$scene" -TrackoVariant "$variant" > /dev/null
-              sleep 8
-              xcrun simctl io "$MAIN" screenshot "screenshots/variant-${variant}-scene-${scene}.png" > /dev/null 2>&1
-            done
+          for font in $FONTS; do
+            shots "$MAIN" "font-${font}" -TrackoFont "$font"
           done
           # Increase Contrast: muted text and dots should brighten.
           if xcrun simctl ui "$MAIN" increase_contrast enabled; then
@@ -102,9 +105,12 @@ jobs:
           if [ -n "$COMPACT" ]; then
             prepare "$COMPACT"
             shots "$COMPACT" compact
-            # The largest accessibility text size on the smallest phone: nothing may clip.
+            # The largest accessibility text size on the smallest phone: nothing may clip, in any
+            # candidate typeface.
             if xcrun simctl ui "$COMPACT" content_size accessibility-extra-extra-extra-large; then
-              shots "$COMPACT" compact-ax
+              for font in $FONTS; do
+                shots "$COMPACT" "compact-ax-${font}" -TrackoFont "$font"
+              done
               xcrun simctl ui "$COMPACT" content_size large || true
             fi
             xcrun simctl shutdown "$COMPACT" || true

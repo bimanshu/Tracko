@@ -1,3 +1,4 @@
+import Observation
 import SwiftUI
 import UIKit
 
@@ -19,7 +20,7 @@ enum Palette {
     static let neutral100 = OKLCH(0.920, 0.008, 160)
     static let neutral50 = OKLCH(0.975, 0.005, 160)
 
-    // Green ramp: the brand, one hue end to end. The glow and the accent are the only steps in use.
+    // Green ramp: the brand, one hue end to end. The light and the accent are the only steps in use.
     static let green600 = OKLCH(0.500, 0.170, 152)
     static let green300 = OKLCH(0.850, 0.235, 152)
 
@@ -65,6 +66,7 @@ enum Theme {
         static let fillSubtle = Role(Palette.neutral600, increased: Palette.neutral400)
         static let fillStrong = Role(Palette.neutral300, increased: Palette.neutral50)
         static let accent = Role(Palette.green300)
+        static let spotlight = Role(Palette.green600)
     }
 
     // MARK: Backgrounds
@@ -95,9 +97,13 @@ enum Theme {
     /// You improved: gains, the +%, a target you beat. Never decorative text.
     static let accent = Roles.accent.color
 
-    /// The soft green glow falling from the top of the screen, measured from the onboarding
-    /// reference (design/references/006): lightness fades evenly from the glow colour at the top
-    /// to the page just past half the screen, mixed in OKLab so it never turns muddy.
+    /// The stage light on the onboarding hero: a beam from above the screen and a pool around the
+    /// figures. Only ever a translucent light behind them, never text or a fill.
+    static let spotlight = Roles.spotlight.color
+
+    /// A soft green glow falling from the top (the home screen's, and the giant phone's own
+    /// screen): lightness fades evenly from the glow colour at the top to the page just past
+    /// half the height, mixed in OKLab so it never turns muddy.
     static func glow(fadesOutAt end: Double = 0.52) -> LinearGradient {
         let steps = 12
         var stops = (0...steps).map { index -> Gradient.Stop in
@@ -109,14 +115,63 @@ enum Theme {
     }
 }
 
-/// The type scale, named by use. Geist throughout; sizes follow Dynamic Type, and the Bold Text
-/// setting steps each face up one weight.
+/// The type scale, named by use. Sizes follow Dynamic Type, and the Bold Text setting steps each
+/// face up one weight. The typeface is `family`: release builds use the default; Debug builds can
+/// switch it to compare candidates (Onboarding/Variants).
 enum TypeScale {
-    enum Weight: String {
-        case regular = "Geist-Regular"
-        case semibold = "Geist-SemiBold"
-        case bold = "Geist-Bold"
-        case extraBold = "Geist-ExtraBold"
+    /// The typeface in use. Views read it as they draw, and it's observable: change it and every
+    /// view that uses it redraws in place, keeping its state.
+    static var family: Family {
+        get { typeface.family }
+        set { typeface.family = newValue }
+    }
+
+    private static let typeface = Typeface()
+
+    /// Sans-serif families bundled with the app (DesignSystem/Fonts), each with four roles.
+    enum Family: String, CaseIterable, Identifiable {
+        case geist, satoshi, figtree, outfit, rubik, bricolage
+
+        static let `default` = Family.geist
+
+        var id: String { rawValue }
+
+        var name: String {
+            switch self {
+            case .geist: return "Geist"
+            case .satoshi: return "Satoshi"
+            case .figtree: return "Figtree"
+            case .outfit: return "Outfit"
+            case .rubik: return "Rubik"
+            case .bricolage: return "Bricolage"
+            }
+        }
+
+        /// PostScript names for regular, semibold, bold and extra bold.
+        fileprivate var faces: [String] {
+            switch self {
+            case .geist: return ["Geist-Regular", "Geist-SemiBold", "Geist-Bold", "Geist-ExtraBold"]
+            // Satoshi has no 600 or 800: Medium and Black stand in.
+            case .satoshi: return ["Satoshi-Regular", "Satoshi-Medium", "Satoshi-Bold", "Satoshi-Black"]
+            case .figtree: return ["Figtree-Regular", "Figtree-SemiBold", "Figtree-Bold", "Figtree-ExtraBold"]
+            case .outfit: return ["Outfit-Regular", "Outfit-SemiBold", "Outfit-Bold", "Outfit-ExtraBold"]
+            case .rubik: return ["Rubik-Regular", "Rubik-SemiBold", "Rubik-Bold", "Rubik-ExtraBold"]
+            case .bricolage:
+                return ["BricolageGrotesque-Regular", "BricolageGrotesque-SemiBold",
+                        "BricolageGrotesque-Bold", "BricolageGrotesque-ExtraBold"]
+            }
+        }
+
+        func fontName(_ weight: Weight) -> String {
+            faces[weight.rawValue]
+        }
+    }
+
+    enum Weight: Int {
+        case regular, semibold, bold, extraBold
+
+        /// This weight's font in the current family.
+        var fontName: String { TypeScale.family.fontName(self) }
 
         /// One step heavier, for Bold Text.
         var bolder: Weight {
@@ -144,25 +199,31 @@ enum TypeScale {
     )
 
     /// The Tracko wordmark on the welcome page (already the heaviest face), tightened 3.5%.
-    static let wordmark = Font.custom(Weight.extraBold.rawValue, size: 52, relativeTo: .largeTitle)
+    static var wordmark: Font { .custom(Weight.extraBold.fontName, size: 52, relativeTo: .largeTitle) }
     static let wordmarkTracking = -0.035
 
     /// "Welcome to", above the wordmark.
     static func intro(_ legibility: LegibilityWeight?) -> Font {
-        .custom(Weight.semibold.resolved(legibility).rawValue, size: 24, relativeTo: .title2)
+        .custom(Weight.semibold.resolved(legibility).fontName, size: 24, relativeTo: .title2)
     }
 
     /// Button labels.
     static func button(_ legibility: LegibilityWeight?) -> Font {
-        .custom(Weight.semibold.resolved(legibility).rawValue, size: 17, relativeTo: .headline)
+        .custom(Weight.semibold.resolved(legibility).fontName, size: 17, relativeTo: .headline)
     }
 
     /// Text drawn inside an illustration, such as the giant phone's screen. Fixed size: it
     /// scales with the picture, not with Dynamic Type, and the illustration carries an
     /// accessibility label instead.
     static func illustration(_ weight: Weight, _ size: CGFloat) -> Font {
-        Font.custom(weight.rawValue, fixedSize: size)
+        Font.custom(weight.fontName, fixedSize: size)
     }
+}
+
+/// Holds `TypeScale.family`, so SwiftUI tracks which views read it. Use `TypeScale.family`.
+@Observable
+final class Typeface {
+    var family = TypeScale.Family.default
 }
 
 enum Space {

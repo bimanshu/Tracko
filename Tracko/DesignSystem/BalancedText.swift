@@ -26,6 +26,8 @@ struct BalancedText: UIViewRepresentable {
     var color: Color = Theme.textPrimary
     var alignment: NSTextAlignment = .center
     var isHeader = false
+    /// The typeface, read as the view is made, so a change of `TypeScale.family` redraws it.
+    let family = TypeScale.family
 
     func makeUIView(context: Context) -> UILabel {
         let label = UILabel()
@@ -73,7 +75,7 @@ struct BalancedText: UIViewRepresentable {
 
     private func attributedText(in environment: EnvironmentValues) -> NSAttributedString {
         let weight = environment.legibilityWeight == .bold ? style.boldWeight : style.weight
-        let base = UIFont(name: weight.rawValue, size: style.size) ?? .systemFont(ofSize: style.size)
+        let base = UIFont(name: family.fontName(weight), size: style.size) ?? .systemFont(ofSize: style.size)
         let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(environment.dynamicTypeSize))
         let font = UIFontMetrics(forTextStyle: style.textStyle).scaledFont(for: base, compatibleWith: traits)
 

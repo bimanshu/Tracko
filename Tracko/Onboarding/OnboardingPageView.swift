@@ -6,6 +6,8 @@ import SwiftUI
 struct OnboardingPageView: View {
     let page: OnboardingPage
     let isActive: Bool
+    /// Told where the hero sits on screen, so the spotlight can follow it.
+    var onHeroSpot: (HeroSpot) -> Void = { _ in }
 
     private let demo = DemoContent()
 
@@ -28,6 +30,8 @@ struct OnboardingPageView: View {
                 .frame(minHeight: 150, idealHeight: 150)
                 .layoutPriority(1)
                 .entrance(1)
+                // Measured outside the entrance, so the light doesn't follow its 12 pt rise.
+                .reportsHeroSpot(onHeroSpot)
             words
                 .padding(.horizontal, Space.gutter)
                 .padding(.top, Space.l)
@@ -74,6 +78,6 @@ struct WelcomeTitle: View {
 
 #Preview("Log page") {
     OnboardingPageView(page: .log, isActive: true)
-        .background { GlowBackground() }
+        .background(Theme.bgPage)
         .onAppear { Fonts.register() }
 }

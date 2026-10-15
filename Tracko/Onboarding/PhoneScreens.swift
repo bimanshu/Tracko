@@ -7,12 +7,12 @@ import SwiftUI
 // Labels in the top ~80 pt sit on the screen's glow, so they use textSecondary, not textTertiary.
 
 private enum PhoneText {
-    static let label = TypeScale.illustration(.semibold, 10.5)
-    static let title = TypeScale.illustration(.bold, 15)
-    static let note = TypeScale.illustration(.regular, 14)
-    static let detail = TypeScale.illustration(.regular, 11.5)
-    static let tile = TypeScale.illustration(.bold, 14)
-    static let score = TypeScale.illustration(.extraBold, 40)
+    static var label: Font { TypeScale.illustration(.semibold, 10.5) }
+    static var title: Font { TypeScale.illustration(.bold, 15) }
+    static var note: Font { TypeScale.illustration(.regular, 14) }
+    static var detail: Font { TypeScale.illustration(.regular, 11.5) }
+    static var tile: Font { TypeScale.illustration(.bold, 14) }
+    static var score: Font { TypeScale.illustration(.extraBold, 40) }
 }
 
 /// The verdict at the foot of a phone screen: the number first, then the plain reason (§8).

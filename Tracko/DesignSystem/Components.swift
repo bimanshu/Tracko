@@ -5,7 +5,8 @@ import UIKit
 
 /// The near-black page with the brand glow falling from the top, and a faint grain over both so
 /// the long, dark gradient never bands on screen. The glow fades up once, when the screen first
-/// appears (an opacity fade, so it suits Reduce Motion too).
+/// appears (an opacity fade, so it suits Reduce Motion too). The onboarding uses its own light
+/// (Onboarding/Spotlight.swift).
 struct GlowBackground: View {
     @State private var isLit = false
 
@@ -31,8 +32,12 @@ struct GlowBackground: View {
 struct LogoMark: View {
     var isCompact = false
 
+    static func height(isCompact: Bool) -> CGFloat {
+        isCompact ? 48 : 64
+    }
+
     var body: some View {
-        let height: CGFloat = isCompact ? 48 : 64
+        let height = Self.height(isCompact: isCompact)
         Capsule()
             .strokeBorder(Theme.textPrimary, lineWidth: isCompact ? 3 : 3.5)
             .frame(width: height * 0.67, height: height)
@@ -138,7 +143,7 @@ struct PageDots: View {
 
 // MARK: - Words
 
-/// A page headline: Geist Bold at 1.1 line height, balanced over its lines.
+/// A page headline: bold at 1.1 line height, balanced over its lines.
 struct PageHeadline: View {
     let text: String
     var style = TypeScale.headline

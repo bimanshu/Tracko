@@ -44,6 +44,7 @@ ROLES = {
     "fillStrong": ("neutral300", "neutral50"),
     "accent": ("green300", "green300"),
     "glow": ("green600", "green600"),
+    "spotlight": ("green600", "green600"),
 }
 
 # (foreground, background, kind) for every pair on screen. Kinds set the thresholds below.
@@ -55,7 +56,7 @@ PAIRS = [
     ("textInverse", "accent", "label"),        # a beaten set's tile
     ("textPrimary", "bgRaised", "label"),      # set tiles
     ("accent", "bgPage", "large"),             # the +% score
-    ("textPrimary", "glow", "large"),          # the logo, at the brightest part of the glow
+    ("textPrimary", "glow", "large"),          # the logo at the brightest part of a glow (the spotlight is fainter)
     ("fillSubtle", "bgPage", "ui"),            # inactive page dots
     ("fillStrong", "bgRaised", "ui"),          # a progress bar on its track
     ("accent", "bgRaised", "ui"),              # a beaten bar on its track

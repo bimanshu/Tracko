@@ -27,7 +27,7 @@ The onboarding as of v0.1 (the code CI screenshots on every push), kept for befo
 ## Patterns
 
 ### P1 · Onboarding like Any Distance (from 005, 006)
-Owner, 2026-10-14: "make my onboarding like this", at most 4 screens, with our 3D characters polished to match the mascot, and green as the brand colour for the glow. Applied in onboarding v0.2 (skill §9, §11).
+Owner, 2026-10-14: "make my onboarding like this", at most 4 screens, with our 3D characters polished to match the mascot, and green as the brand colour for the glow. Applied in onboarding v0.2 (skill §9, §11); in v0.2.2 the glow became Tracko's own spotlight on the platform.
 
 - **Layout:** logo capsule on top; a 3D diorama hero across the full width; a bold two-line headline and a one-line subline, centred; page dots; a light pill button with an arrow. Pages swipe; the logo, dots and button stay put.
 - **Hero:** a character beside a giant phone that shows the app's real screen, with a few props, on a dark round platform. Matched to 006 by measurement: platform 82% of the screen width, phone 32% and centred, a camera ~5° above the platform; platform top ≈ rgb(33,34,38), side ≈ rgb(11,12,16), phone frame ≈ rgb(17,18,22).

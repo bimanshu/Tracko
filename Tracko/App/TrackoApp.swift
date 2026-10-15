@@ -6,6 +6,9 @@ struct TrackoApp: App {
 
     init() {
         Fonts.register()
+        #if DEBUG
+        FontVariantHost.prepare()
+        #endif
     }
 
     var body: some Scene {
@@ -16,8 +19,8 @@ struct TrackoApp: App {
                         .transition(.opacity)
                 } else {
                     #if DEBUG
-                    // Debug builds host the onboarding variants behind a picker (Onboarding/Variants).
-                    VariantHost { onboardingComplete = true }
+                    // Debug builds host the typeface candidates behind a picker (Onboarding/Variants).
+                    FontVariantHost { onboardingComplete = true }
                         .transition(.opacity)
                     #else
                     OnboardingFlowView { onboardingComplete = true }

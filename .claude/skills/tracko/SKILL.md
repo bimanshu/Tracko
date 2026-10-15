@@ -21,11 +21,11 @@ Working name in the early concept decks: "Everything Gym". The product is now **
 
 | Area | State | Notes |
 |---|---|---|
-| Onboarding (4 pages) | Built v0.2 | Any Distance layout (§11): welcome, log it like a note, number to beat, get stronger. 3D heroes with live phone screens |
-| Design system | Built v0.2 | OKLCH tokens rendered in Display P3, Geist type scale, green glow (§9) |
+| Onboarding (4 pages) | Built v0.2 | Any Distance layout (§11): welcome, log it like a note, number to beat, get stronger. 3D heroes with live phone screens, under a green spotlight; the characters blink and smile |
+| Design system | Built v0.2 | OKLCH tokens rendered in Display P3, type scale (Geist until a new face is picked), green spotlight (§9) |
 | Characters (female, male) | Built v0.2 | Vinyl-toy finish, onboarding heroes, sheets (`characters/`). The "gym log" clip is still the v0.1 look |
 | Goal, notes import, baseline, notification ask | Moved out of onboarding | Owner capped onboarding at 4 pages; these move to the app's first run (not built) |
-| Onboarding variants | Under evaluation (Debug) | Stage (shipped), Window (light held in a case), Spotlight (beam on the platform, characters blink and smile). Picker in Debug builds; `-TrackoVariant`; `Onboarding/Variants/` is deleted once one is promoted |
+| Typeface | Under evaluation (Debug) | Geist reads too technical (owner, 2026-10-15). Candidates: Satoshi, Figtree, Outfit, Rubik, Bricolage Grotesque. Picker in Debug builds; `-TrackoFont <name>`; release builds stay on Geist until one is picked, then `Onboarding/Variants/` is deleted |
 | Logo | Placeholder | A "T" in a capsule, until the brand mark is designed |
 | Logging, growth report, home | Not started | |
 
@@ -170,12 +170,12 @@ Default from `Locale.measurementSystem`: `.us` → lb, else kg. Demo content loc
 ### 9.0 References
 UI decisions draw on the reference library in `design/references/README.md`: numbered screenshots and recordings (Mobbin links are fetched with `design/references/tools/fetch_mobbin.py`), and the **Patterns** taken from them. Entries are filing only; the product owner decides what to extract from each, so don't apply a reference until a takeaway is recorded. The library's **Priority** list is the owner's ranking and wins when references disagree; two references share priority 1: 005 (Any Distance; its whole flow is 006) for how the onboarding should look, with a 3D character matching Tracko's; 004 (BitePal) for illustration and storytelling. Read it before any UI work. When a pattern is applied to the app, write the resulting rule or token into this section.
 
-**Applied:** the onboarding layout, glow, hero dioramas and button come from 005/006 (library pattern P1, owner's direction 2026-10-14), with green as the brand colour instead of the reference's red. The hero phone's size and the platform's size and colours were measured from 006 (see §9.7).
+**Applied:** the onboarding layout, hero dioramas and button come from 005/006 (library pattern P1, owner's direction 2026-10-14), with green as the brand colour instead of the reference's red. The reference's glow from the top became our own spotlight on the platform (variant round, owner's pick 2026-10-15), so it reads as Tracko rather than a copy. The hero phone's size and the platform's size and colours were measured from 006 (see §9.7).
 
 UI craft skills from `jakubkrehel/skills` are installed in `.claude/skills/` (`better-ui`, `better-layout`, `better-typography`, `better-colors`, `better-accessibility`, `better-writing`, `better-interface`; user-invoked: `interface-review`, `variant`, `break`, `explain-interface`). They're written for the web: apply their principles (concentric radii, optical alignment, hit areas, type scale, surface depth, contrast) in SwiftUI terms, and ignore CSS- or React-specific mechanics. Where they conflict with this skill, this skill wins. Update them with `npx skills update`.
 
 ### 9.1 Concept
-**Your log, on a stage.** A near-black canvas with a soft green glow falling from the top; 3D characters on a round platform beside a giant phone that shows Tracko's own live screen; one bold headline. Numbers do the shouting, in brand green. Motion still flows **note → maths → proof**.
+**Your log, on a stage.** A near-black canvas with a soft green spotlight falling on a round platform; 3D characters on a round platform beside a giant phone that shows Tracko's own live screen; one bold headline. Numbers do the shouting, in brand green. Motion still flows **note → maths → proof**.
 
 ### 9.2 Colour (OKLCH, rendered in Display P3)
 Tokens are written in OKLCH. `Palette` holds the primitives (ramps named by hue and step); `Theme.Roles` maps each role to a primitive for the standard appearance and for **Increase Contrast**; `Theme.<role>` is the dynamic colour views use. Views never use `Palette`, and never borrow a token outside its role (no text colour as a fill, no page colour as text). `design/tools/palette.py` prints every primitive's P3/sRGB values and gamut, and every pair's **WCAG 2 ratio and APCA Lc in both appearances**; `ColorTests` checks the same in CI.
@@ -193,17 +193,20 @@ Tokens are written in OKLCH. `Palette` holds the primitives (ramps named by hue 
 | fillSubtle | neutral600 (0.570) → neutral400 | Inactive page dots (Lc −31) |
 | fillStrong | neutral300 → neutral50 | Neutral bars and markers |
 | **accent** | green300 (0.850 0.235 152) | **Brand and growth:** gains, the +%, a beaten target. Beyond sRGB on purpose |
-| glow | green600 (0.500 0.170 152) | `Theme.glow()` only: fades to the page by 52% of the height, mixed in OKLab, under a faint grain against banding |
+| spotlight | green600 (0.500 0.170 152) | The onboarding light (`SpotlightBackground`): a beam from above the screen to the platform (8 → 40% opacity) and a pool around the figures (60% at its heart), under a faint grain against banding |
+| glow | green600 | `Theme.glow()`: the home screen and the giant phone's own screen; fades to the page by 52% of the height, mixed in OKLab |
 
 - Thresholds (APCA |Lc| / WCAG): body 75 / 4.5, labels 60 / 4.5, large text 45 / 3, UI parts 30 / 3. Fix failures by lightness only, holding hue and chroma. Increase Contrast moves each muted role 15+ points of lightness further from the page.
-- **Green means growth, and is the brand** (merged with "gain"); the glow is its one decorative use. Never use green for anything else.
+- **Green means growth, and is the brand** (merged with "gain"); light (the spotlight, the glow) is its only decorative use. Never use green for anything else.
 - Neutrals carry a trace of the brand hue (160°, chroma ≤ 0.012). Steps sit closer at the light end, where text lives. Primitives nothing uses are removed.
 - **Reserved for later features**, added in OKLCH when first used: target (yellow), muscle (red; never losses or bodyweight), past (blue).
 
 ### 9.3 Type
-- **Geist** (SIL OFL, `DesignSystem/Fonts/`), registered at launch by `Fonts.register()`. Faces: Regular, SemiBold, Bold, ExtraBold.
+- **Typeface: under review.** Release builds use **Geist** (SIL OFL); the owner finds it too technical. Debug builds switch between five sans-serif candidates (`TypeScale.Family`, picker at the bottom of the onboarding, `-TrackoFont <name>`): **Satoshi** (modern grotesk, geometric bones), **Figtree** (friendly geometric, plain), **Outfit** (pure geometric, round), **Rubik** (softly rounded corners, sporty), **Bricolage Grotesque** (quirky grotesque with ink traps). To pick one, set `TypeScale.Family.default` and delete `Onboarding/Variants/`.
+- Fonts live in `DesignSystem/Fonts/` (four faces each: regular, semibold, bold, extra bold) and `Fonts.register()` registers them all at launch. The Google Fonts families are SIL OFL, each with its `<Family>-OFL.txt`. **Satoshi** (Fontshare, ITF Free Font License) may be embedded in the app but not redistributed, and this repo is public: it's never committed. `scripts/fetch-fonts.sh` downloads it (git-ignored), and CI runs it before building. Satoshi has no 600 or 800, so Medium and Black stand in.
+- `TypeScale.family` is observable: views resolve font names as they draw, so switching it redraws in place.
 - **Scale (`TypeScale`, Dynamic Type):** wordmark 52 ExtraBold, −3.5% · intro 24 SemiBold · headline 34 Bold, −2%, line height 1.1 · body 17 Regular, line height 1.45 · button 17 SemiBold.
-- **Headlines and sublines use `BalancedText`** (a UILabel bridge): it sets the line height (SwiftUI on iOS 17 can't go below Geist's 1.3) and balances the lines like CSS `text-wrap: balance`, so two-line headlines split evenly and nothing ends on one short word.
+- **Headlines and sublines use `BalancedText`** (a UILabel bridge): it sets the line height (SwiftUI on iOS 17 can't go below a font's own, about 1.3) and balances the lines like CSS `text-wrap: balance`, so two-line headlines split evenly and nothing ends on one short word.
 - **Bold Text** steps every face up one weight (`TypeScale.Weight.resolved`).
 - Keep short values on one line with `.keptTogether` (non-breaking spaces): "8 × 12, 11, 10".
 - Text inside an illustration (the hero phone) uses fixed sizes via `TypeScale.illustration`, laid out near its drawn size (140 pt wide) so nothing renders below ~8 pt; the illustration carries a VoiceOver label instead.
@@ -215,7 +218,7 @@ Tokens are written in OKLCH. `Palette` holds the primitives (ramps named by hue 
 - Numbers roll with `.contentTransition(.numericText(value:))`.
 - Honest motion: growth curves slow down over time.
 - **Reduce Motion:** jump to the final frame (or crossfade). Every page must handle it.
-- Buttons scale to 0.96 when pressed, eased out over 150 ms (`Motion.press`). The glow fades in once when the app opens.
+- Buttons scale to 0.96 when pressed, eased out over 150 ms (`Motion.press`). The light fades in once when the app opens.
 - **First launch enters in stages** (`.entrance(step)`): logo, hero, words, dots, button, 100 ms apart, each rising 12 pt out of a 4 pt blur; with Reduce Motion they only fade. Never stagger routine changes.
 - Each onboarding page has one moment: its phone screen's script.
 
@@ -225,7 +228,7 @@ Tokens are written in OKLCH. `Palette` holds the primitives (ramps named by hue 
 - Slider and option changes → `.selection`
 
 ### 9.6 Accessibility
-Dynamic Type for all non-score text; VoiceOver labels describe what an animation shows (each hero is one image element with a description built from the demo numbers); decorative pieces `accessibilityHidden`; tap targets ≥ 44 pt (the pill is 48); never rely on colour alone (the current page dot is also longer). Page dots are adjustable for VoiceOver; each hero has a "Replay animation" action. At the largest text sizes an onboarding page scrolls rather than clipping (`ViewThatFits`). Decorative layers (glow, grain) take no touches. CI screenshots every page with Increase Contrast and at the largest accessibility text size.
+Dynamic Type for all non-score text; VoiceOver labels describe what an animation shows (each hero is one image element with a description built from the demo numbers); decorative pieces `accessibilityHidden`; tap targets ≥ 44 pt (the pill is 48); never rely on colour alone (the current page dot is also longer). Page dots are adjustable for VoiceOver; each hero has a "Replay animation" action. At the largest text sizes an onboarding page scrolls rather than clipping (`ViewThatFits`). Decorative layers (light, grain) take no touches. CI screenshots every page with Increase Contrast, and at the largest accessibility text size in every candidate typeface.
 
 ### 9.7 Characters
 Two chibi characters, female and male, carry the story. Idle expressions (blinks; a laugh easing into a smile) cut between extra renders (`-open`, `-blink`), only on the active page and never with Reduce Motion. **v0.2 look** (owner: "polish it more like the Any Distance mascot"): glossy vinyl-toy finish, black-and-white colour blocking with brand-green details (she: white top, black leggings, green hair tie; he: black top, white shorts, white cap with a green badge), big glossy eyes with a white rim, thumbs, chunky sneakers on a green midsole. Both come from one recipe (`characters/build/tracko_characters.py`), so any pose works for both; expressions swap rather than morph; numbers are drawn by the app, never baked into a render.
@@ -243,16 +246,18 @@ Two chibi characters, female and male, carry the story. Idle expressions (blinks
   Tracko/
     App/            TrackoApp, HomePlaceholderView
     Core/           LiftMath (formulas, units)
-    DesignSystem/   OKLCH, Theme (Palette, Theme, TypeScale, Space, Radius, Motion), Components, Fonts (+ Geist)
-    Onboarding/     OnboardingModel, OnboardingFlowView, OnboardingPageView, Hero, PhoneScreens,
-                    HeroRender (generated), Script, DemoContent
+    DesignSystem/   OKLCH, Theme (Palette, Theme, TypeScale, Space, Radius, Motion), Components, Fonts (+ font files)
+    Onboarding/     OnboardingModel, OnboardingFlowView, OnboardingPageView, OnboardingHero, Hero, Spotlight,
+                    PhoneScreens, HeroRender (generated), Script, DemoContent
+                    Variants/ (Debug only: the typeface picker, deleted once one is chosen)
+  scripts/          fetch-fonts.sh (Satoshi, which can't be committed)
     Assets.xcassets/Onboarding/   hero renders (generated)
   TrackoTests/      LiftMathTests (§7 examples), ColorTests (gamut, contrast), DemoContentTests
   ```
 - **Project:** `Tracko.xcodeproj` (Xcode 16+) uses synchronized folders: files added under `Tracko/` or `TrackoTests/` join their target automatically, so never hand-edit the project for a new file. Swift 5 language mode, iPhone only, portrait. Bundle ID `com.bimanshu.tracko`.
 - **CI:** `.github/workflows/ios.yml` runs on every push that touches the app: builds, runs the tests, then launches each onboarding scene on an iPhone Pro and an iPhone SE simulator and uploads screenshots (plus a contact sheet per device) as the `screenshots` artifact. The JPEGs are also force-pushed to the `ci-screenshots` branch (`git fetch origin ci-screenshots`), which cloud sessions can read when the artifact host is blocked. Check both after every change; cloud sessions can't compile locally.
 - **Running on a phone:** steps in `README.md` (Xcode + free Apple ID, 7-day expiry).
-- **Debug launch argument:** `-TrackoStartScene <0–3>` opens onboarding on that page (used by CI screenshots).
+- **Debug launch arguments:** `-TrackoStartScene <0–3>` opens onboarding on that page; `-TrackoFont <satoshi|figtree|outfit|rubik|bricolage>` picks the typeface (both used by CI screenshots).
 - **Generated files:** `HeroRender.swift` and the hero PNGs come from `python3 characters/build/render_all.py heroes` (Blender 4.5). Re-render rather than edit them.
 - **Conventions:**
   - Scripted animations: `@MainActor func play() async` driven by `.task(id: ScriptRun(isActive:replay:))`, steps separated by `guard await Script.wait(x) else { return }` so leaving a page cancels and rewinds cleanly. Tap a hero to replay.
@@ -274,11 +279,11 @@ Getting the "before" (notes import or one baseline lift) and the first win now h
 **Your log talks back**, in three beats: you already do the work → we do the maths → you watch yourself change.
 
 ### Pages (layout from 005/006)
-Logo capsule on top; hero full width; two-line headline (≤ 7 words) and one subline; page dots; a light pill button ("Continue", then "Start tracking"). Pages swipe; the logo, dots and button stay put.
+Logo capsule on top; hero full width under the spotlight, which holds still as pages swipe and follows the hero when it shrinks or scrolls (`HeroSpot`); two-line headline (≤ 7 words) and one subline; page dots; a light pill button ("Continue", then "Start tracking"). Pages swipe; the logo, dots and button stay put.
 
 | # | Page | Hero | Phone screen moment | Words |
 |---|---|---|---|---|
-| 1 | Welcome | Both characters wave on the stand | – (the glow fades in) | "Welcome to Tracko" / "The gym log that talks back." |
+| 1 | Welcome | Both characters wave on the stand | – (the light comes up) | "Welcome to Tracko" / "The gym log that talks back." |
 | 2 | Log it like a note | She reaches for the giant phone; surprised → happy | "8 × 12, 11, 10" types in, Monday appears, +10% counts up with the reason | "Log it like a note" / "Type 8 × 12, 11, 10 and Tracko does the maths." |
 | 3 | Number to beat | He does lateral raises; effort → happy | Two sets fill a bar toward Thursday's line; "10 reps ties Thursday. 11 beats it."; the last set beats it; +3% | "Always know the number to beat" / "Every lift opens with what beats last time." |
 | 4 | Get stronger | Both celebrate | The honest curve draws over 12 weeks; +25% | "Watch yourself get stronger" / "Proof you're growing, week by week." |
@@ -303,6 +308,7 @@ Onboarding completion (reaching page 4 and tapping Start tracking); time on each
 ---
 
 ## 13. Changelog (newest first)
+- **2026-10-15 · v0.2.2** Spotlight promoted from the onboarding variants (owner's pick over Stage and Window): a green beam onto the platform and a pool around the figures replace the glow from the top, and the characters blink and smile on the active page. New `spotlight` role. Typeface round started: Geist reads too technical, so Debug builds compare Satoshi, Figtree, Outfit, Rubik and Bricolage Grotesque; `TypeScale.family` is observable. Satoshi is fetched by `scripts/fetch-fonts.sh`, never committed (licence).
 - **2026-10-14 · v0.2.1** Polish pass against the better-* skills: role tokens used only in their role, every colour pair passing APCA as well as WCAG in standard and Increase Contrast, grain against banding; balanced 1.1 headlines (BalancedText), Bold Text, kept-together values, larger phone-screen text and a simpler beat screen; optical button padding, 150 ms press, staged first-launch entrance; VoiceOver replay action; CI screenshots for Increase Contrast and the largest text size.
 - **2026-10-14 · v0.2** Onboarding rebuilt in the style of the priority-1 reference (Any Distance, 005/006) at the owner's direction: 4 pages, 3D heroes with live phone screens, near-black canvas with a soft green glow, light pill button. Green is now the brand colour (merging "gain"). Colour tokens moved to OKLCH (Display P3), type to Geist. Characters v0.2 (vinyl-toy finish). Goal, history and the notification ask moved out of onboarding. The nine v0.1 scenes and the shape body figure were removed (see git history before 7d2a7e5).
 - **2026-10-02** Characters v0.1: female and male clay chibis built in Blender from one script, character sheets, and an 8 s "gym log" clip (transparent master + preview). Added §9.7.

@@ -3,13 +3,12 @@ import SwiftUI
 /// A page's hero: the rendered diorama with its live phone screen, the face swap and haptic when
 /// the moment lands, tap (or the VoiceOver action) to replay, and a description for VoiceOver.
 ///
-/// `isLively` adds subtle idle expressions: the characters blink every few seconds, and a laugh
-/// eases into a calm smile. They play only on the active page and never with Reduce Motion
-/// (looping decoration is the first thing it turns off).
+/// The characters stay subtly alive under the spotlight: they blink every few seconds, and a
+/// laugh eases into a calm smile. That plays only on the active page and never with Reduce Motion
+/// (looping decoration is the first thing it turns off), which keeps each page's single face.
 struct OnboardingHero: View {
     let page: OnboardingPage
     let isActive: Bool
-    var isLively = false
 
     private let demo = DemoContent()
     @State private var answered = false
@@ -40,7 +39,7 @@ struct OnboardingHero: View {
             .task(id: IdleRun(isPlaying: isPlaying, replay: replay, answered: answered)) { await idle() }
     }
 
-    private var isPlaying: Bool { isLively && isActive && !reduceMotion }
+    private var isPlaying: Bool { isActive && !reduceMotion }
     private var run: ScriptRun { ScriptRun(isActive: isActive, replay: replay) }
 
     // MARK: Faces
@@ -58,19 +57,20 @@ struct OnboardingHero: View {
         }
     }
 
-    private var isLivelyNow: Bool { isLively && !reduceMotion }
+    /// Whether the extra faces (smile, blink) are in use.
+    private var hasMoods: Bool { !reduceMotion }
 
     /// Every face the hero may show.
     private var frames: [String] {
         switch page {
         case .welcome:
-            return isLivelyNow ? moodFrames("hero-welcome") : ["hero-welcome"]
+            return hasMoods ? moodFrames("hero-welcome") : ["hero-welcome"]
         case .grow:
-            return isLivelyNow ? moodFrames("hero-grow") : ["hero-grow"]
+            return hasMoods ? moodFrames("hero-grow") : ["hero-grow"]
         case .log:
-            return isLivelyNow ? ["hero-log-a", "hero-log-a-blink"] + moodFrames("hero-log-b") : ["hero-log-a", "hero-log-b"]
+            return hasMoods ? ["hero-log-a", "hero-log-a-blink"] + moodFrames("hero-log-b") : ["hero-log-a", "hero-log-b"]
         case .beat:
-            return isLivelyNow ? ["hero-beat-a"] + moodFrames("hero-beat-b") : ["hero-beat-a", "hero-beat-b"]
+            return hasMoods ? ["hero-beat-a"] + moodFrames("hero-beat-b") : ["hero-beat-a", "hero-beat-b"]
         }
     }
 
@@ -78,15 +78,15 @@ struct OnboardingHero: View {
     private var face: String {
         switch page {
         case .welcome:
-            return isLivelyNow ? moodFace("hero-welcome") : "hero-welcome"
+            return hasMoods ? moodFace("hero-welcome") : "hero-welcome"
         case .grow:
-            return isLivelyNow ? moodFace("hero-grow") : "hero-grow"
+            return hasMoods ? moodFace("hero-grow") : "hero-grow"
         case .log:
-            if answered { return isLivelyNow ? moodFace("hero-log-b") : "hero-log-b" }
-            return isLivelyNow && mood == .blink ? "hero-log-a-blink" : "hero-log-a"
+            if answered { return hasMoods ? moodFace("hero-log-b") : "hero-log-b" }
+            return hasMoods && mood == .blink ? "hero-log-a-blink" : "hero-log-a"
         case .beat:
             // Before the payoff he's straining (eyes squeezed), so there's nothing to blink.
-            if answered { return isLivelyNow ? moodFace("hero-beat-b") : "hero-beat-b" }
+            if answered { return hasMoods ? moodFace("hero-beat-b") : "hero-beat-b" }
             return "hero-beat-a"
         }
     }

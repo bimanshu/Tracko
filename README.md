@@ -7,7 +7,7 @@ The product source of truth (features, maths, voice, design system, onboarding s
 ## What's here
 
 - `Tracko.xcodeproj`: iOS 17+, SwiftUI, no dependencies. New files in `Tracko/` or `TrackoTests/` are picked up automatically, with no project edits needed.
-- `Tracko/`: the app. `Core/LiftMath.swift` holds the formulas, `DesignSystem/` the tokens (OKLCH colours, Geist type) and components, `Onboarding/` the four onboarding pages and their live phone screens. The 3D heroes are rendered from `characters/build/` into `Assets.xcassets/Onboarding/`.
+- `Tracko/`: the app. `Core/LiftMath.swift` holds the formulas, `DesignSystem/` the tokens (OKLCH colours, type), fonts and components, `Onboarding/` the four onboarding pages and their live phone screens. The 3D heroes are rendered from `characters/build/` into `Assets.xcassets/Onboarding/`.
 - `TrackoTests/`: unit tests that keep the skill's reference examples true.
 - `.github/workflows/ios.yml`: builds, runs the tests and screenshots every onboarding page on an iPhone simulator for each push. The screenshots are attached to the run as an artifact.
 
@@ -15,18 +15,20 @@ The product source of truth (features, maths, voice, design system, onboarding s
 
 You need a Mac with Xcode 16 or later. A free Apple ID is enough.
 
-1. Open `Tracko.xcodeproj` in Xcode.
-2. In **Xcode → Settings → Accounts**, sign in with your Apple ID.
-3. Select the **Tracko** project, then the **Tracko** target, then **Signing & Capabilities**. Set **Team** to your Personal Team. If Xcode says the bundle identifier is taken, change `com.bimanshu.tracko` to something unique.
-4. Plug your iPhone in and tap **Trust** on the phone. On the iPhone, turn on **Settings → Privacy & Security → Developer Mode** and restart when asked.
-5. Pick your iPhone in the device menu at the top of Xcode and press **Run** (⌘R).
-6. The first time, the iPhone blocks the app until you trust it: **Settings → General → VPN & Device Management**, tap your Apple ID, then **Trust**.
+1. In Terminal, in this folder, run `./scripts/fetch-fonts.sh`. It downloads the Satoshi font, whose licence lets the app embed it but not this public repo share it. Skip it and the app still runs, just without Satoshi.
+2. Open `Tracko.xcodeproj` in Xcode.
+3. In **Xcode → Settings → Accounts**, sign in with your Apple ID.
+4. Select the **Tracko** project, then the **Tracko** target, then **Signing & Capabilities**. Set **Team** to your Personal Team. If Xcode says the bundle identifier is taken, change `com.bimanshu.tracko` to something unique.
+5. Plug your iPhone in and tap **Trust** on the phone. On the iPhone, turn on **Settings → Privacy & Security → Developer Mode** and restart when asked.
+6. Pick your iPhone in the device menu at the top of Xcode and press **Run** (⌘R).
+7. The first time, the iPhone blocks the app until you trust it: **Settings → General → VPN & Device Management**, tap your Apple ID, then **Trust**.
 
 With a free Apple ID the app stops opening after 7 days. Press Run again to renew it. After the first run you can also run over Wi-Fi: in **Window → Devices and Simulators**, tick **Connect via network**.
 
 ### Handy while developing
 
 - Tap a page's picture to replay its phone animation.
+- Debug builds show a typeface picker at the bottom of the onboarding (Satoshi, Figtree, Outfit, Rubik, Bricolage). It switches the whole screen in place and remembers your pick; `-TrackoFont <name>` sets it at launch.
 - In Debug builds, the launch argument `-TrackoStartScene <0–3>` opens onboarding on that page. Set it in **Product → Scheme → Edit Scheme → Run → Arguments**.
 - After onboarding finishes, the placeholder home screen has **Replay onboarding**.
 - The pages and components have SwiftUI previews, so you can open the canvas with ⌥⌘↩.
