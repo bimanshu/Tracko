@@ -48,10 +48,6 @@ jobs:
           EOF
           cat "$GITHUB_OUTPUT"
 
-      # Satoshi may not be redistributed, so it isn't in the repository: fetch it for the build.
-      - name: Fetch fonts
-        run: ./scripts/fetch-fonts.sh || echo "::warning::Satoshi could not be fetched, so it can't be picked in this build."
-
       - name: Build and test
         run: |
           set -o pipefail
@@ -90,7 +86,7 @@ jobs:
           MAIN="${{ steps.sims.outputs.main }}"
           COMPACT="${{ steps.sims.outputs.compact }}"
           # Typeface candidates (Debug harness, Onboarding/Variants). Unnamed runs use the first.
-          FONTS="satoshi figtree outfit rubik bricolage"
+          FONTS="outfit lexend sora jakarta poppins"
           prepare "$MAIN"
           shots "$MAIN" main
           for font in $FONTS; do

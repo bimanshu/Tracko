@@ -9,6 +9,3 @@ DerivedData/
 # macOS
 .DS_Store
 __pycache__/
-
-# Satoshi may not be redistributed: fetched by scripts/fetch-fonts.sh, never committed.
-Tracko/DesignSystem/Fonts/Satoshi-*

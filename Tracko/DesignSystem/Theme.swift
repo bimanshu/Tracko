@@ -130,7 +130,7 @@ enum TypeScale {
 
     /// Sans-serif families bundled with the app (DesignSystem/Fonts), each with four roles.
     enum Family: String, CaseIterable, Identifiable {
-        case geist, satoshi, figtree, outfit, rubik, bricolage
+        case geist, outfit, poppins, sora, jakarta, lexend
 
         static let `default` = Family.geist
 
@@ -139,31 +139,23 @@ enum TypeScale {
         var name: String {
             switch self {
             case .geist: return "Geist"
-            case .satoshi: return "Satoshi"
-            case .figtree: return "Figtree"
             case .outfit: return "Outfit"
-            case .rubik: return "Rubik"
-            case .bricolage: return "Bricolage"
+            case .poppins: return "Poppins"
+            case .sora: return "Sora"
+            case .jakarta: return "Jakarta"
+            case .lexend: return "Lexend"
             }
         }
 
-        /// PostScript names for regular, semibold, bold and extra bold.
-        fileprivate var faces: [String] {
-            switch self {
-            case .geist: return ["Geist-Regular", "Geist-SemiBold", "Geist-Bold", "Geist-ExtraBold"]
-            // Satoshi has no 600 or 800: Medium and Black stand in.
-            case .satoshi: return ["Satoshi-Regular", "Satoshi-Medium", "Satoshi-Bold", "Satoshi-Black"]
-            case .figtree: return ["Figtree-Regular", "Figtree-SemiBold", "Figtree-Bold", "Figtree-ExtraBold"]
-            case .outfit: return ["Outfit-Regular", "Outfit-SemiBold", "Outfit-Bold", "Outfit-ExtraBold"]
-            case .rubik: return ["Rubik-Regular", "Rubik-SemiBold", "Rubik-Bold", "Rubik-ExtraBold"]
-            case .bricolage:
-                return ["BricolageGrotesque-Regular", "BricolageGrotesque-SemiBold",
-                        "BricolageGrotesque-Bold", "BricolageGrotesque-ExtraBold"]
-            }
+        /// The start of each face's PostScript name, as in "PlusJakartaSans-Bold".
+        private var postScriptFamily: String {
+            self == .jakarta ? "PlusJakartaSans" : name
         }
 
+        /// The PostScript name of this family's face for a weight.
         func fontName(_ weight: Weight) -> String {
-            faces[weight.rawValue]
+            let style = ["Regular", "SemiBold", "Bold", "ExtraBold"][weight.rawValue]
+            return postScriptFamily + "-" + style
         }
     }
 
