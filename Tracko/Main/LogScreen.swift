@@ -39,10 +39,15 @@ struct LogScreen: View {
         let workout = store.workout(workoutID)
         let reading = workout.map { store.reading(of: $0) } ?? WorkoutReading()
         VStack(spacing: 0) {
-            topBar(date: workout?.date ?? .now, canFinish: !reading.loggedLifts.isEmpty)
+            topBar(canFinish: !reading.loggedLifts.isEmpty)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if let workout {
+                        Text(DayText.relative(workout.date))
+                            .typeRole(.screenTitle)
+                            .foregroundStyle(Theme.textPrimary)
+                            .accessibilityAddTraits(.isHeader)
+                            .padding(.bottom, Space.xs)
                         ForEach(Array(workout.lines.enumerated()), id: \.element.id) { index, line in
                             LogLineRow(
                                 text: Binding(
@@ -88,30 +93,25 @@ struct LogScreen: View {
         }
     }
 
-    private func topBar(date: Date, canFinish: Bool) -> some View {
-        ZStack {
-            Text(DayText.relative(date))
-                .typeRole(.rowTitle)
-                .foregroundStyle(Theme.textPrimary)
-                .accessibilityAddTraits(.isHeader)
-            HStack {
-                Button("Close") {
-                    focusedLine = nil
-                    store.close(workoutID)
-                    onClose()
-                }
-                .typeRole(.body)
-                .foregroundStyle(Theme.textSecondary)
-                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
-                Spacer()
-                Button("Finish") {
-                    focusedLine = nil
-                    store.finish(workoutID)
-                    onFinish()
-                }
-                .buttonStyle(CompactButtonStyle())
-                .disabled(!canFinish)
+    /// Close and Finish only, so they fit side by side at every text size.
+    private func topBar(canFinish: Bool) -> some View {
+        HStack {
+            Button("Close") {
+                focusedLine = nil
+                store.close(workoutID)
+                onClose()
             }
+            .typeRole(.body)
+            .foregroundStyle(Theme.textSecondary)
+            .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+            Spacer()
+            Button("Finish") {
+                focusedLine = nil
+                store.finish(workoutID)
+                onFinish()
+            }
+            .buttonStyle(CompactButtonStyle())
+            .disabled(!canFinish)
         }
         .padding(.horizontal, Space.gutter)
         .padding(.vertical, Space.s)

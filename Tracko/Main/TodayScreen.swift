@@ -130,6 +130,8 @@ struct TodayScreen: View {
             StatTile(number: "\(workouts)", label: workouts == 1 ? "workout this week" : "workouts this week")
             StatTile(number: "\(weeks)", label: weeks == 1 ? "week in a row" : "weeks in a row")
         }
+        // Both tiles take the taller one's height.
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -182,6 +184,7 @@ struct StatTile: View {
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxHeight: .infinity, alignment: .topLeading)
         .cardStyle()
         .accessibilityElement(children: .combine)
     }

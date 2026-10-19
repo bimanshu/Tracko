@@ -49,8 +49,9 @@ struct BalancedText: UIViewRepresentable {
             return CGSize(width: ceil(line.width), height: ceil(line.height))
         }
         let height = Self.bounds(string, width: available).height
-        // Balance: shrink the width for as long as the text keeps the same number of lines.
-        var low = available / 2
+        // Balance: shrink the width for as long as the text keeps the same number of lines, but
+        // never below the widest word, or a big text size would break a word in two.
+        var low = max(available / 2, min(ceil(Self.widestWord(string)) + 1, available))
         var high = available
         for _ in 0..<14 {
             let middle = (low + high) / 2
@@ -61,6 +62,17 @@ struct BalancedText: UIViewRepresentable {
             }
         }
         return CGSize(width: min(ceil(high) + 1, available), height: ceil(height))
+    }
+
+    /// The widest run that has to stay on one line: a word, or words kept together with
+    /// non-breaking spaces.
+    private static func widestWord(_ string: NSAttributedString) -> CGFloat {
+        guard string.length > 0 else { return 0 }
+        let attributes = string.attributes(at: 0, effectiveRange: nil)
+        return string.string
+            .split(whereSeparator: { $0 == " " || $0.isNewline })
+            .map { bounds(NSAttributedString(string: String($0), attributes: attributes), width: .greatestFiniteMagnitude).width }
+            .max() ?? 0
     }
 
     private static func bounds(_ string: NSAttributedString, width: CGFloat) -> CGSize {

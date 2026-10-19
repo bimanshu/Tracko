@@ -36,6 +36,16 @@ struct ImportScreen: View {
     @State private var found: [Workout]?
 
     var body: some View {
+        // Always a scroll view (not a fallback): the keyboard opening must never swap the layout,
+        // which would rebuild the editor and drop its focus.
+        ScrollView {
+            content
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: Space.l) {
             VStack(alignment: .leading, spacing: Space.s) {
                 PageHeadline("Got old logs?", alignment: .left)
@@ -65,7 +75,7 @@ struct ImportScreen: View {
             .scrollContentBackground(.hidden)
             .autocorrectionDisabled()
             .padding(Space.m)
-            .frame(maxHeight: .infinity)
+            .frame(height: 240)
             .background(Theme.bgRaised, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             .overlay(alignment: .topLeading) {
                 if text.isEmpty {
@@ -82,30 +92,27 @@ struct ImportScreen: View {
     }
 
     private func preview(_ workouts: [Workout]) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Space.m) {
-                if workouts.isEmpty {
-                    Text("Tracko couldn’t find any sets. Lines like “Bench 60 × 8, 8, 7” work best, under a date like “Mon 13 Oct”.")
-                        .typeRole(.body)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-                ForEach(workouts) { workout in
-                    VStack(alignment: .leading, spacing: Space.xs) {
-                        Text(DayText.relative(workout.date))
-                            .typeRole(.rowTitle)
-                            .foregroundStyle(Theme.textPrimary)
-                        ForEach(workout.loggedLifts(unit: store.unit)) { lift in
-                            Text("\(lift.name): \(lift.session.summary(unit: store.unit).keptTogether)")
-                                .typeRole(.caption)
-                                .foregroundStyle(Theme.textSecondary)
-                        }
+        VStack(alignment: .leading, spacing: Space.m) {
+            if workouts.isEmpty {
+                Text("Tracko couldn’t find any sets. Lines like “Bench 60 × 8, 8, 7” work best, under a date like “Mon 13 Oct”.")
+                    .typeRole(.body)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            ForEach(workouts) { workout in
+                VStack(alignment: .leading, spacing: Space.xs) {
+                    Text(DayText.relative(workout.date))
+                        .typeRole(.rowTitle)
+                        .foregroundStyle(Theme.textPrimary)
+                    ForEach(workout.loggedLifts(unit: store.unit)) { lift in
+                        Text("\(lift.name): \(lift.session.summary(unit: store.unit).keptTogether)")
+                            .typeRole(.caption)
+                            .foregroundStyle(Theme.textSecondary)
                     }
-                    .cardStyle()
-                    .accessibilityElement(children: .combine)
                 }
+                .cardStyle()
+                .accessibilityElement(children: .combine)
             }
         }
-        .frame(maxHeight: .infinity)
     }
 
     @ViewBuilder
@@ -142,6 +149,16 @@ struct GoalScreen: View {
     @AppStorage(StorageKey.goal) private var goal = ""
 
     var body: some View {
+        ViewThatFits(in: .vertical) {
+            content
+            ScrollView {
+                content
+            }
+            .scrollIndicatorsFlash(onAppear: true)
+        }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: Space.l) {
             VStack(alignment: .leading, spacing: Space.s) {
                 PageHeadline("What’s the goal?", alignment: .left)
