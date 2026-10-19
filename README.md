@@ -7,7 +7,7 @@ The product source of truth (features, maths, voice, design system, onboarding s
 ## What's here
 
 - `Tracko.xcodeproj`: iOS 17+, SwiftUI, no dependencies. New files in `Tracko/` or `TrackoTests/` are picked up automatically, with no project edits needed.
-- `Tracko/`: the app. `Core/LiftMath.swift` holds the formulas, `DesignSystem/` the tokens (OKLCH colours, type), fonts and components, `Onboarding/` the four onboarding pages and their live phone screens. The 3D heroes are rendered from `characters/build/` into `Assets.xcassets/Onboarding/`.
+- `Tracko/`: the app. `Core/` holds the formulas (`LiftMath`), the note reader (`NoteParser`) and the saved workouts (`WorkoutStore`); `DesignSystem/` the tokens (OKLCH colours, type), fonts and components; `Onboarding/` the four onboarding pages and their live phone screens; `Main/` the first run, Today, the log, the growth report and Progress. The 3D heroes are rendered from `characters/build/` into `Assets.xcassets/Onboarding/`.
 - `TrackoTests/`: unit tests that keep the skill's reference examples true.
 - `.github/workflows/ios.yml`: builds, runs the tests and screenshots every onboarding page on an iPhone simulator for each push. The screenshots are attached to the run as an artifact.
 
@@ -28,5 +28,6 @@ With a free Apple ID the app stops opening after 7 days. Press Run again to rene
 
 - Tap a page's picture to replay its phone animation.
 - In Debug builds, the launch argument `-TrackoStartScene <0–3>` opens onboarding on that page. Set it in **Product → Scheme → Edit Scheme → Run → Arguments**.
-- After onboarding finishes, the placeholder home screen has **Replay onboarding**.
+- **Replay onboarding** is in Settings (the gear on the Progress tab).
+- In Debug builds, `-TrackoScreen <firstrun|today|log|report|progress|lift>` skips onboarding and opens that screen over demo history (nothing is saved).
 - The pages and components have SwiftUI previews, so you can open the canvas with ⌥⌘↩.

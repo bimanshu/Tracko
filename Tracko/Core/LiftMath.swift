@@ -43,10 +43,21 @@ struct LiftSession: Hashable, Sendable {
         return first
     }
 
-    /// "8 kg × 12, 11, 10"
+    /// "8 kg × 12, 11, 10". Sets at different weights are grouped in order:
+    /// "60 kg × 8, 8 · 62.5 kg × 6".
     func summary(unit: WeightUnit) -> String {
-        let reps = sets.map { String($0.reps) }.joined(separator: ", ")
-        return "\(LiftMath.format(weight: topWeight, unit: unit)) × \(reps)"
+        var groups: [(weight: Double, reps: [Int])] = []
+        for set in sets {
+            if let last = groups.last, abs(last.weight - set.weight) < LiftMath.tolerance {
+                groups[groups.count - 1].reps.append(set.reps)
+            } else {
+                groups.append((weight: set.weight, reps: [set.reps]))
+            }
+        }
+        return groups.map { group in
+            let reps = group.reps.map { String($0) }.joined(separator: ", ")
+            return "\(LiftMath.format(weight: group.weight, unit: unit)) × \(reps)"
+        }.joined(separator: " · ")
     }
 }
 
@@ -170,6 +181,17 @@ enum LiftMath {
         let perSet = target / (heavier * Double(max(sets, 1)))
         let reps = Int((perSet + tolerance).rounded(.down)) + 1
         return LiftSession(weight: heavier, reps: Array(repeating: reps, count: sets))
+    }
+
+    /// The next target after a session: the same weight with one more rep on its weakest set
+    /// (the last of them, when sets tie). 8 kg × 12, 11, 10 → 8 kg × 12, 11, 11.
+    static func nextTarget(after session: LiftSession) -> LiftSession {
+        var sets = session.sets
+        let weakest = sets.indices.min { first, second in
+            sets[first].reps < sets[second].reps || (sets[first].reps == sets[second].reps && first > second)
+        }
+        if let weakest { sets[weakest].reps += 1 }
+        return LiftSession(sets: sets)
     }
 
     // MARK: Cut mode (§7.4)

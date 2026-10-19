@@ -170,6 +170,68 @@ enum TypeScale {
         .custom(Weight.semibold.resolved(legibility).fontName, size: 17, relativeTo: .headline)
     }
 
+    /// Text on the app's screens, named by use. Every role follows Dynamic Type and steps up a
+    /// weight with Bold Text; apply one with `.typeRole(_:)`.
+    enum Role {
+        /// Screen titles: "Today", "Progress".
+        case screenTitle
+        /// Section titles: "Numbers to beat".
+        case sectionTitle
+        /// A lift's or a row's name.
+        case rowTitle
+        /// Reading text.
+        case body
+        /// Second lines: last time's sets, a verdict's reason.
+        case caption
+        /// The smallest text: notes on the maths.
+        case footnote
+        /// A verdict's number in the growth report: "+10%".
+        case score
+
+        var weight: Weight {
+            switch self {
+            case .screenTitle: return .bold
+            case .sectionTitle, .rowTitle: return .semibold
+            case .body, .caption, .footnote: return .regular
+            case .score: return .extraBold
+            }
+        }
+
+        var size: CGFloat {
+            switch self {
+            case .screenTitle, .score: return 34
+            case .sectionTitle: return 20
+            case .rowTitle, .body: return 17
+            case .caption: return 15
+            case .footnote: return 13
+            }
+        }
+
+        var textStyle: Font.TextStyle {
+            switch self {
+            case .screenTitle, .score: return .largeTitle
+            case .sectionTitle: return .title3
+            case .rowTitle, .body: return .body
+            case .caption: return .subheadline
+            case .footnote: return .footnote
+            }
+        }
+
+        /// Display sizes sit a little tighter.
+        var tracking: CGFloat {
+            switch self {
+            case .screenTitle, .score: return size * -0.02
+            default: return 0
+            }
+        }
+    }
+
+    /// A line of the workout note (UIKit, for the note editor): body size, following Dynamic Type.
+    static func noteFont(_ weight: Weight, legibility: LegibilityWeight?) -> UIFont {
+        let base = UIFont(name: weight.resolved(legibility).fontName, size: 17) ?? .systemFont(ofSize: 17)
+        return UIFontMetrics(forTextStyle: .body).scaledFont(for: base)
+    }
+
     /// Text drawn inside an illustration, such as the giant phone's screen. Fixed size: it
     /// scales with the picture, not with Dynamic Type, and the illustration carries an
     /// accessibility label instead.
@@ -191,6 +253,8 @@ enum Space {
 
 enum Radius {
     static let small: CGFloat = 8
+    /// Cards on a screen, inset by the 24 pt gutter.
+    static let card: CGFloat = 20
 }
 
 enum Motion {

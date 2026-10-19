@@ -83,10 +83,21 @@ jobs:
               xcrun simctl io "$udid" screenshot "screenshots/${tag}-scene-${scene}.png" > /dev/null 2>&1
             done
           }
+          # screens <device> <tag>: the main interface over demo history (-TrackoScreen, Debug only).
+          screens() {
+            local udid=$1 tag=$2 index=0
+            for screen in firstrun today log report progress lift; do
+              xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE" -TrackoScreen "$screen" > /dev/null
+              sleep 7
+              xcrun simctl io "$udid" screenshot "screenshots/${tag}-scene-${index}.png" > /dev/null 2>&1
+              index=$((index + 1))
+            done
+          }
           MAIN="${{ steps.sims.outputs.main }}"
           COMPACT="${{ steps.sims.outputs.compact }}"
           prepare "$MAIN"
           shots "$MAIN" main
+          screens "$MAIN" app
           # Increase Contrast: muted text and dots should brighten.
           if xcrun simctl ui "$MAIN" increase_contrast enabled; then
             shots "$MAIN" main-contrast
@@ -96,9 +107,11 @@ jobs:
           if [ -n "$COMPACT" ]; then
             prepare "$COMPACT"
             shots "$COMPACT" compact
+            screens "$COMPACT" compact-app
             # The largest accessibility text size on the smallest phone: nothing may clip.
             if xcrun simctl ui "$COMPACT" content_size accessibility-extra-extra-extra-large; then
               shots "$COMPACT" compact-ax
+              screens "$COMPACT" compact-ax-app
               xcrun simctl ui "$COMPACT" content_size large || true
             fi
             xcrun simctl shutdown "$COMPACT" || true

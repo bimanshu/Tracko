@@ -24,11 +24,12 @@ Working name in the early concept decks: "Everything Gym". The product is now **
 | Onboarding (4 pages) | Built v0.2 | Any Distance layout (§11): welcome, log it like a note, number to beat, get stronger. 3D heroes with live phone screens, under a green spotlight; the characters blink and smile |
 | Design system | Built v0.2 | OKLCH tokens rendered in Display P3, Lexend type scale, green spotlight (§9) |
 | Characters (female, male) | Built v0.2 | Vinyl-toy finish, onboarding heroes, sheets (`characters/`). The "gym log" clip is still the v0.1 look |
-| Goal, notes import, baseline, notification ask | Moved out of onboarding | Owner capped onboarding at 4 pages; these move to the app's first run (not built) |
+| First run | Built v0.3 | Notes import (paste → preview → save) and goal (§12). Baseline and the notification ask: not yet |
+| Main interface | Built v0.3 | Today, the log (a note read line by line), growth report, Progress with lift histories, settings (§12). Saved on device as JSON |
 | Logo | Placeholder | A "T" in a capsule, until the brand mark is designed |
-| Logging, growth report, home | Not started | |
+| Living body, Sunday report, Wrapped, cut mode | Not started | Their places in Progress are reserved (§12) |
 
-Code lives in `Tracko/` (see §10). Builds and tests run in CI, which also screenshots every onboarding page; the app runs on a real iPhone.
+Code lives in `Tracko/` (see §10). Builds and tests run in CI, which also screenshots every onboarding page and every main screen; the app runs on a real iPhone.
 
 ---
 
@@ -243,18 +244,23 @@ Two chibi characters, female and male, carry the story. Idle expressions (blinks
 - **Structure:**
   ```
   Tracko/
-    App/            TrackoApp, HomePlaceholderView
-    Core/           LiftMath (formulas, units)
+    App/            TrackoApp (onboarding → first run → main)
+    Core/           LiftMath (formulas, units), NoteParser (reads a note line), Workout (+ WorkoutReader:
+                    lifts and the notes under each line), WorkoutStore (saved JSON, history), NoteImporter, DayText
+    Main/           MainView (tabs, LaunchScreen, Appearance), TodayScreen, LogScreen (+ NoteLineField), ReportScreen,
+                    ProgressScreen (+ lift detail, settings), FirstRunView (import, goal), DemoHistory
     DesignSystem/   OKLCH, Theme (Palette, Theme, TypeScale, Space, Radius, Motion), Components, Fonts (+ Lexend)
     Onboarding/     OnboardingModel, OnboardingFlowView, OnboardingPageView, OnboardingHero, Hero, Spotlight,
                     PhoneScreens, HeroRender (generated), Script, DemoContent
     Assets.xcassets/Onboarding/   hero renders (generated)
-  TrackoTests/      LiftMathTests (§7 examples), ColorTests (gamut, contrast), DemoContentTests
+  TrackoTests/      LiftMathTests (§7 examples), ColorTests (gamut, contrast), DemoContentTests,
+                    NoteParserTests, WorkoutTests (reader, store, weeks, days), NoteImporterTests
   ```
 - **Project:** `Tracko.xcodeproj` (Xcode 16+) uses synchronized folders: files added under `Tracko/` or `TrackoTests/` join their target automatically, so never hand-edit the project for a new file. Swift 5 language mode, iPhone only, portrait. Bundle ID `com.bimanshu.tracko`.
 - **CI:** `.github/workflows/ios.yml` runs on every push that touches the app: builds, runs the tests, then launches each onboarding scene on an iPhone Pro and an iPhone SE simulator and uploads screenshots (plus a contact sheet per device) as the `screenshots` artifact. The JPEGs are also force-pushed to the `ci-screenshots` branch (`git fetch origin ci-screenshots`), which cloud sessions can read when the artifact host is blocked. Check both after every change; cloud sessions can't compile locally.
 - **Running on a phone:** steps in `README.md` (Xcode + free Apple ID, 7-day expiry).
-- **Debug launch argument:** `-TrackoStartScene <0–3>` opens onboarding on that page (used by CI screenshots).
+- **Debug launch arguments** (CI screenshots use both): `-TrackoStartScene <0–3>` opens onboarding on that page; `-TrackoScreen <firstrun|today|log|report|progress|lift>` skips onboarding and opens that screen over `DemoHistory`, kept in memory.
+- **Storage:** `WorkoutStore` keeps every workout as JSON in Application Support, written after each change. A workout's note text is the record; lifts, numbers to beat and verdicts are always read from it. Each workout keeps the unit it was typed in.
 - **Generated files:** `HeroRender.swift` and the hero PNGs come from `python3 characters/build/render_all.py heroes` (Blender 4.5). Re-render rather than edit them.
 - **Conventions:**
   - Scripted animations: `@MainActor func play() async` driven by `.task(id: ScriptRun(isActive:replay:))`, steps separated by `guard await Script.wait(x) else { return }` so leaving a page cancels and rewinds cleanly. Tap a hero to replay.
@@ -295,7 +301,50 @@ Onboarding completion (reaching page 4 and tapping Start tracking); time on each
 
 ---
 
-## 12. Open questions to validate
+## 12. Main interface spec
+
+Agreed with the owner on 2026-10-19 (grilling round 1). Built from v0.3.
+
+### Shape
+Two tabs, each answering one question from §2. No feed, plans or nutrition tab (rule 6); settings sit behind a button on Progress.
+
+```
+Onboarding → First run (≤ 2 skippable screens) → Today ⇄ Progress
+```
+
+### First run
+1. **Import:** "Got old logs?" Paste notes → Tracko shows what it read (workouts by date, each lift's sets) → **Save**. Or **Start fresh**. Nothing is saved before the preview (rule 2). Lines that read as dates ("Mon 13 Oct", "Thursday") start a new workout.
+2. **Goal:** Get stronger / Lose fat, or Not now. Lose fat turns on cut mode later (§6.6); Health is asked only then.
+- Units come from the region (§7.5), changeable in settings. The notification ask waits until after the first growth report.
+
+### Today (tab 1): "what do I need today?"
+- **Start logging**, or **Continue** the workout in progress.
+- **Numbers to beat:** each lift from the last workout, with last time's sets and the next target.
+- **This week:** workouts this week and weeks trained in a row (§6.5).
+
+### The log: a note, not a form
+- A workout is one note. Each line is read as it's typed (`NoteParser`): a lift's name, its sets ("8 × 12, 11, 10", "60 kg 3 × 10", "3 × 10 @ 60", or one set per line), or both on one line ("Bench 60 × 8, 8, 7"). Other words are plain text.
+- Under a lift's name: last time's sets and the next target. Under its sets: what the last set needs ("10 ties Thursday. 11 beats it.") and a bar toward last time's total, then the verdict once the sets are in (§6.1–6.2).
+- A line Tracko can't read gets a gentle fix ("Try 8 × 12, 11, 10"), never an error. Every keystroke is saved (offline, on device).
+- Skip, reorder or log afterwards: nothing is required. **Finish** opens the growth report.
+
+### Growth report
+One block per lift: the verdict, number first (§8), and the next target. Dips read as recovery, in neutral colour (§7.3). A first-time lift says when its number to beat arrives. **Done** returns to Today.
+
+### Progress (tab 2): "am I actually growing?"
+- **Since you started:** weeks, workouts, and the next Wrapped checkpoint (3, 6, 9, 12 months from the first workout, §6.4).
+- **Lifts:** each with its change in estimated max since the first session; tap for every session, each verdict, and the maths behind them (rule 4).
+- Later in this tab: the living body, the Sunday report, Wrapped itself.
+
+### Free and Pro
+The verdict and the number to beat are free: they're the loop the onboarding promises (rules 1 and 5). Pro is the long story: full history, Wrapped with photos, and the §6.7 insights. This replaces "next targets" in the §4 pricing hypothesis.
+
+### Not decided yet (assumed for v0.3, change any)
+How a split is labelled (inferred, never asked); when an unfinished workout closes itself; bodyweight lifts; the paywall's moment; the go-up target ("or 9 kg × 10, 10, 10") on Today.
+
+---
+
+## 13. Open questions to validate
 1. Why do notebook lifters stay on paper when Hevy is free? (20 US/UK interviews)
 2. Will ≥5% pay ≈ $40/yr? (pricing page + trial before the product exists)
 3. Is notes import the "wow" moment? (parse 30 real logs, watch reactions)
@@ -304,7 +353,8 @@ Onboarding completion (reaching page 4 and tapping Start tracking); time on each
 
 ---
 
-## 13. Changelog (newest first)
+## 14. Changelog (newest first)
+- **2026-10-19 · v0.3** Main interface, from the agreed flow (§12): first run (notes import with a preview, goal), Today (start or continue, numbers to beat, this week), the log as a note read line by line (last time and next target under each lift, what the last set needs, then the verdict; unclear lines get a suggested fix), growth report, Progress (since you started, next Wrapped, every lift's change and history with the maths), settings. Free/Pro line moved: the number to beat is free. New: `NoteParser`, `WorkoutReader`, `WorkoutStore`, `NoteImporter`, `LiftMath.nextTarget`, text roles (`TypeScale.Role`), `CompactButtonStyle`, `TargetBar`, `-TrackoScreen`.
 - **2026-10-15 · v0.2.4** Type is now **Lexend** (owner's pick from round 3). The other candidates, Geist and the picker were removed; the scale is unchanged, since Lexend's x-height matches Geist's.
 - **2026-10-15 · v0.2.3** Typeface round 3: the owner liked Outfit but wants a taller x-height, so Debug builds now compare Outfit with Lexend, Sora, Plus Jakarta Sans and Poppins (round geometric faces, x-height 0.525–0.548 against Outfit's 0.475). Round 2's other faces, and the Satoshi download script, were removed (git history: 2b8bb0a). The phone screen's score shrinks rather than truncating when a face runs wide.
 - **2026-10-15 · v0.2.2** Spotlight promoted from the onboarding variants (owner's pick over Stage and Window): a green beam onto the platform and a pool around the figures replace the glow from the top, and the characters blink and smile on the active page. New `spotlight` role. Typeface round started: Geist reads too technical, so Debug builds compare Satoshi, Figtree, Outfit, Rubik and Bricolage Grotesque; `TypeScale.family` is observable. Satoshi is fetched by `scripts/fetch-fonts.sh`, never committed (licence).

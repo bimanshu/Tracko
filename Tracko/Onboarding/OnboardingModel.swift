@@ -47,4 +47,9 @@ extension OnboardingPage {
 
 enum StorageKey {
     static let onboardingComplete = "onboardingComplete"
+    static let firstRunComplete = "firstRunComplete"
+    /// "stronger" or "cut" (§6.6), once chosen.
+    static let goal = "goal"
+    /// "kg" or "lb", once changed in settings; until then the region decides (§7.5).
+    static let unit = "unit"
 }

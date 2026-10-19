@@ -57,15 +57,17 @@ struct PrimaryButtonStyle: ButtonStyle {
     /// A trailing icon sits optically further out, so that side gets 2 pt less padding.
     var hasTrailingIcon = false
     @Environment(\.legibilityWeight) private var legibilityWeight
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(TypeScale.button(legibilityWeight))
-            .foregroundStyle(Theme.textInverse)
+            // Disabled: the pill goes quiet rather than fading, so its label stays readable.
+            .foregroundStyle(isEnabled ? Theme.textInverse : Theme.textTertiary)
             .padding(.leading, Space.xl)
             .padding(.trailing, hasTrailingIcon ? Space.xl - 2 : Space.xl)
             .frame(minHeight: 48)
-            .background(Theme.bgInverse, in: Capsule())
+            .background(isEnabled ? Theme.bgInverse : Theme.bgRaised, in: Capsule())
             .contentShape(Capsule())
             .pressScale(configuration.isPressed)
     }
@@ -107,6 +109,73 @@ struct AdvanceLabel: View {
                 .fontWeight(.semibold)
                 .accessibilityHidden(true)
         }
+    }
+}
+
+/// A small filled button for a screen's corner: "Finish".
+struct CompactButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.legibilityWeight) private var legibilityWeight
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.custom(TypeScale.Weight.semibold.resolved(legibilityWeight).fontName, size: 15, relativeTo: .subheadline))
+            .foregroundStyle(isEnabled ? Theme.textInverse : Theme.textTertiary)
+            .padding(.horizontal, Space.l)
+            .frame(minHeight: 36)
+            .background(isEnabled ? Theme.bgInverse : Theme.bgRaised, in: Capsule())
+            .contentShape(Capsule())
+            // The visible pill is 36 pt; the touch area is the full 44.
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+            .pressScale(configuration.isPressed)
+    }
+}
+
+// MARK: - Surfaces
+
+private struct TypeRoleModifier: ViewModifier {
+    let role: TypeScale.Role
+    @Environment(\.legibilityWeight) private var legibilityWeight
+
+    func body(content: Content) -> some View {
+        content
+            .font(.custom(role.weight.resolved(legibilityWeight).fontName, size: role.size, relativeTo: role.textStyle))
+            .tracking(role.tracking)
+    }
+}
+
+extension View {
+    /// Sets text in one of the type scale's roles (`TypeScale.Role`).
+    func typeRole(_ role: TypeScale.Role) -> some View {
+        modifier(TypeRoleModifier(role: role))
+    }
+
+    /// A raised card: a group of related rows on the page.
+    func cardStyle() -> some View {
+        padding(Space.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.bgRaised, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+    }
+}
+
+/// A thin bar toward a target: today's total against last time's. It turns green once it gets
+/// there. Decorative: the text beside it says the same in words.
+struct TargetBar: View {
+    let fraction: Double
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Theme.bgRaised)
+                Capsule()
+                    .fill(fraction >= 1 ? Theme.accent : Theme.fillStrong)
+                    .frame(width: proxy.size.width * min(max(fraction, 0), 1))
+            }
+        }
+        .frame(height: 6)
+        .animation(Motion.grow, value: fraction)
+        .accessibilityHidden(true)
     }
 }
 

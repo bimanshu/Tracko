@@ -139,4 +139,18 @@ final class LiftMathTests: XCTestCase {
         XCTAssertEqual(LiftMath.honestProgress(week: 12, of: 12), 1)
         XCTAssertEqual(LiftMath.honestProgress(week: 0, of: 12), 0)
     }
+
+    // MARK: Next target and summaries (§6.2)
+
+    func testNextTargetAddsARepToTheWeakestSet() {
+        XCTAssertEqual(LiftMath.nextTarget(after: thursday), LiftSession(weight: 8, reps: [12, 11, 11]))
+        XCTAssertEqual(LiftMath.nextTarget(after: monday), LiftSession(weight: 8, reps: [10, 10, 11]))
+    }
+
+    func testSummaryGroupsSetsByWeight() {
+        let mixed = LiftSession(sets: [
+            LiftSet(weight: 60, reps: 8), LiftSet(weight: 60, reps: 8), LiftSet(weight: 65, reps: 6),
+        ])
+        XCTAssertEqual(mixed.summary(unit: .kg), "60 kg × 8, 8 · 65 kg × 6")
+    }
 }
